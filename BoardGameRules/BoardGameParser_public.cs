@@ -19,5 +19,18 @@ namespace Level14.BoardGameRules
         {
             return errors.ToArray();
         }
+
+        public override void ReportError(RecognitionException e)
+        {
+            if (e is MissingTokenException)
+            {
+                errors.Add(string.Format("{0}:{1} - Unexpected {2}\n  {3}", e.Line, e.CharPositionInLine, e.Token.Text, e));
+            }
+            else
+            {
+                errors.Add(e.ToString());
+            } 
+            base.ReportError(e);
+        }
     }
 }

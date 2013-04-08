@@ -1,25 +1,36 @@
 grammar BoardGame;
 
-options
-{
+options {
     language=CSharp3;
     output=AST;
 }
 
+tokens {
+	SETTINGS;
+}
+
 @namespace { Level14.BoardGameRules }
 
-ID  :   ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*
-    ;
+NAME: ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ;
 
-INT :   '0'..'9'+
-    ;
+INT: '0'..'9'+ ;
 
-WS  :   ( ' '
-        | '\t'
-        | '\r'
-        | '\n'
-        )
-        {$channel=Antlr.Runtime.TokenChannels.Hidden;}
-    ;
+coord: '{' INT (',' INT)* '}' -> INT+;
 
-sentence: ID INT EOF;
+namelist_comma: NAME (',' NAME) -> NAME+;
+
+settingsRow:
+	(
+	  NAME ':' INT -> ^(NAME INT)
+	| NAME ':' coord -> ^(NAME coord)
+	| NAME ':' namelist_comma -> ^(NAME namelist_comma)
+	) ';'
+	;
+
+settings: 'Settings' '(' settingsRow+ ')' -> ^(SETTINGS settingsRow+);
+
+
+WS: ( ' ' | '\t' | '\r' | '\n' )
+    {$channel=Antlr.Runtime.TokenChannels.Hidden;} ;
+
+sentence: settings EOF;

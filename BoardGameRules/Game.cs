@@ -10,6 +10,11 @@ namespace Level14.BoardGameRules
 {
     public class Game
     {
+        public int PlayerCount { get; private set; }
+        public Coords Size { get; private set; }
+
+        private List<string> pieceTypes = new List<string>();
+
         public Game(string rules)
         {
             try
@@ -19,6 +24,8 @@ namespace Level14.BoardGameRules
                 var tokens = new CommonTokenStream(lexer);
                 var parser = new BoardGameParser(tokens);
 
+                var root = parser.parse();
+
                 var errors = parser.GetErrors();
 
                 if (errors.Length > 0)
@@ -27,9 +34,17 @@ namespace Level14.BoardGameRules
                     throw new InvalidGameException(string.Format("Number of errors: {0} \n\n{1}", errors.Length, msg));
                 }
 
-                var root = parser.parse();
+                // Set player count
 
-                Console.WriteLine("Successfully parsed");
+                CommonTree t = (CommonTree)root.Tree;
+
+                PlayerCount = t.GetChild("SETTINGS").GetChild("PlayerCount").GetIntValue();
+                Size = t.GetChild("SETTINGS").GetChild("BoardDimensions").GetCoordsValue();
+
+                for (int i = 0; i < t.GetChild("SETTINGS").GetChild("PieceTypes").ChildCount; i++)
+                {
+                    pieceTypes.Add(t.GetChild("SETTINGS").GetChild("PieceTypes").GetChild(i).Text);
+                }
             }
             catch (Exception e)
             {

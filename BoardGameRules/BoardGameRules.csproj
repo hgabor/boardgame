@@ -84,6 +84,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BoardGameParser_public.cs" />
+    <Compile Include="GameInt.cs" />
+    <Compile Include="Coords.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="BoardGameLexer.cs">
       <AutoGen>True</AutoGen>
