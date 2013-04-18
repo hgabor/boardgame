@@ -83,8 +83,13 @@
     </Antlr3>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddExpr.cs" />
+    <Compile Include="Board.cs" />
     <Compile Include="BoardGameParser_public.cs" />
-    <Compile Include="GameInt.cs" />
+    <Compile Include="ConstIntExpr.cs" />
+    <Compile Include="Context.cs" />
+    <Compile Include="CoordExpr.cs" />
+    <Compile Include="Expression.cs" />
     <Compile Include="Coords.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Game.cs" />
@@ -99,6 +104,13 @@
       <DependentUpon>BoardGame.g</DependentUpon>
     </Compile>
     <Compile Include="InvalidGameException.cs" />
+    <Compile Include="MoveRule.cs" />
+    <Compile Include="Piece.cs" />
+    <Compile Include="PlaceHolderExpr.cs" />
+    <Compile Include="PlaceHolderValue.cs" />
+    <Compile Include="Player.cs" />
+    <Compile Include="ReferenceExpr.cs" />
+    <Compile Include="SubExpr.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Antlr3.Runtime">

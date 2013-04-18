@@ -6,22 +6,63 @@ options {
 }
 
 tokens {
+	LIST;
+	LIT_COORDS;
+	LIT_INT;
+	MOVE_FROM;
+	MOVE_OPTIONS;
+	MOVE_TO;
+	MOVES;
+	OP_MOVE;
+	PLAYERREF;
+	REF;
 	SETTINGS;
+	STARTINGPIECES;
+	STARTINGBOARD;
 }
 
 @namespace { Level14.BoardGameRules }
 
-NAME: ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ;
+
+// Lexer rules:
+
+NAME: ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ;
+
+PLACEHOLDER: '_';
 
 INT: '0'..'9'+ ;
 
-coord: '{' INT (',' INT)* '}' -> INT+;
+WS: ( ' ' | '\t' | '\r' | '\n' )
+    {$channel=Antlr.Runtime.TokenChannels.Hidden;} ;
+
+Comment: '#' ~( '\r' | '\n' )*
+	{$channel=Antlr.Runtime.TokenChannels.Hidden;} ;
+
+
+// Parser rules:
+
+int: INT -> ^(LIT_INT INT);
+
+ref: NAME -> ^(REF NAME);
+
+intRef: int | ref;
+
+addExpr: intRef '+' intExpr -> ^('+' intRef intExpr );
+subExpr: intRef '-' intExpr -> ^('-' intRef intExpr );
+
+intExpr: intRef | addExpr | subExpr;
+
+intExprP: intExpr | PLACEHOLDER;
+
+coord: '{' intExprP (',' intExprP )* '}' -> ^(LIT_COORDS intExprP+);
 
 namelist_comma: NAME (',' NAME) -> NAME+;
 
+playerRef: 'Player' '(' intExpr ')' -> ^(PLAYERREF intExpr);
+
 settingsRow:
 	(
-	  NAME ':' INT -> ^(NAME INT)
+	  NAME ':' int -> ^(NAME int)
 	| NAME ':' coord -> ^(NAME coord)
 	| NAME ':' namelist_comma -> ^(NAME namelist_comma)
 	) ';'
@@ -29,8 +70,22 @@ settingsRow:
 
 settings: 'Settings' '(' settingsRow+ ')' -> ^(SETTINGS settingsRow+);
 
+pieceStartingCoords: NAME ':' coord ';' -> ^(NAME coord);
 
-WS: ( ' ' | '\t' | '\r' | '\n' )
-    {$channel=Antlr.Runtime.TokenChannels.Hidden;} ;
+startingBoardRow:
+	(
+		playerRef '(' pieceStartingCoords+ ')' -> ^(STARTINGPIECES playerRef ^(LIST pieceStartingCoords+))
+	)
+	;
 
-sentence: settings EOF;
+startingBoard: 'StartingBoard' '(' startingBoardRow+ ')' -> ^(STARTINGBOARD startingBoardRow+);
+
+moveOp:
+	coord '->' 'Empty'? coord -> ^( OP_MOVE ^(MOVE_FROM coord) ^(MOVE_TO coord) ^(MOVE_OPTIONS 'Empty'?) );
+
+moveRow:
+	NAME ':' moveOp ';' -> ^(NAME moveOp);
+
+moves: 'Moves' '(' moveRow+ ')' -> ^(MOVES moveRow+);
+
+sentence: settings startingBoard? moves EOF;

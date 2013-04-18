@@ -8,13 +8,37 @@ namespace Level14.BoardGameRules
 {
     public class Coords
     {
-        private GameInt[] coords;
-        public Coords(params GameInt[] coords)
+        private int[] coords;
+        private bool[] placeholder;
+        public int Dimension { get { return coords.Length; } }
+
+        public bool PlaceHolder
         {
-            this.coords = (GameInt[])coords.Clone();
+            get
+            {
+                foreach (bool p in placeholder)
+                {
+                    if (p) return true;
+                }
+                return false;
+            }
         }
 
-        public GameInt this[int d]
+        public Coords(params int[] coords)
+        {
+            if (coords.Length == 0) throw new ArgumentException("Coords must have at least one param.");
+            this.coords = (int[])coords.Clone();
+            this.placeholder = new bool[coords.Length];
+        }
+        public Coords(int[] coords, bool[] placeholder)
+        {
+            if (coords.Length == 0) throw new ArgumentException("Coords must have at least one param.");
+            if (coords.Length != placeholder.Length) throw new ArgumentException("Coords and placeholder values must have the same length.");
+            this.coords = (int[])coords.Clone();
+            this.placeholder = (bool[])placeholder.Clone();
+        }
+
+        public int this[int d]
         {
             get
             {
@@ -25,17 +49,101 @@ namespace Level14.BoardGameRules
         internal static Coords Parse(ITree tree)
         {
             int dimension = tree.ChildCount;
-            GameInt[] coords = new GameInt[dimension];
+            int[] coords = new int[dimension];
             for (int i = 0; i < dimension; i++)
             {
-                coords[i] = GameInt.Parse(tree.GetChild(i).Text);
+                coords[i] = int.Parse(tree.GetChild(i).Text);
             }
             return new Coords(coords);
+        }
+
+        public static bool Match(Coords c1, Coords c2) {
+            if (c1.coords.Length != c2.coords.Length) return false;
+            for (int i = 0; i < c1.coords.Length; i++)
+            {
+                if (c1.placeholder[i] || c2.placeholder[i]) continue;
+                if (c1.coords[i] != c2.coords[i]) return false;
+            }
+            return true;
         }
 
         public override string ToString()
         {
             return string.Format("{{{0}}}", string.Join(", ", coords));
+        }
+
+        public int[] ToInt32Array()
+        {
+            return Array.ConvertAll(this.coords, gameInt => (int)gameInt);
+        }
+
+        public bool IsLessThan(Coords that)
+        {
+            if (this.coords.Length != that.coords.Length) throw new ArgumentException("Different dimensions.");
+
+            for (int i = 0; i < this.coords.Length; i++)
+            {
+                if (!(this[i] < that[i])) return false;
+            }
+            return true;
+        }
+        public bool IsLessThanOrEquals(Coords that)
+        {
+            if (this.coords.Length != that.coords.Length) throw new ArgumentException("Different dimensions.");
+
+            for (int i = 0; i < this.coords.Length; i++)
+            {
+                if (!(this[i] <= that[i])) return false;
+            }
+            return true;
+        }
+        public bool IsGreaterThan(Coords that)
+        {
+            if (this.coords.Length != that.coords.Length) throw new ArgumentException("Different dimensions.");
+            for (int i = 0; i < this.coords.Length; i++)
+            {
+                if (!(this[i] > that[i])) return false;
+            }
+            return true;
+        }
+        public bool IsGreaterThanOrEquals(Coords that)
+        {
+            if (this.coords.Length != that.coords.Length) throw new ArgumentException("Different dimensions.");
+            for (int i = 0; i < this.coords.Length; i++)
+            {
+                if (!(this[i] >= that[i])) return false;
+            }
+            return true;
+        }
+
+        public override bool Equals(object obj)
+        {
+            Coords that = obj as Coords;
+            if (that == null) return false;
+            if (this.coords.Length != that.coords.Length) return false;
+            for (int i = 0; i < coords.Length; i++)
+            {
+                if (this.coords[i] != that.coords[i]) return false;
+                if (this.placeholder[i] != that.placeholder[i]) return false;
+            }
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = 1;
+            hash = (hash * 17) + coords.Length;
+            foreach (int i in coords)
+            {
+                hash *= 17;
+                hash = hash + i.GetHashCode();
+            }
+            foreach (bool b in placeholder)
+            {
+                hash *= 17;
+                hash = hash + b.GetHashCode();
+            }
+            return hash;
         }
     }
 }

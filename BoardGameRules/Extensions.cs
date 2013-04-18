@@ -8,6 +8,19 @@ namespace Level14.BoardGameRules
 {
     static class Extensions
     {
+        public static bool HasChild(this ITree tree, string index)
+        {
+            for (int i = 0; i < tree.ChildCount; i++)
+            {
+                var child = tree.GetChild(i);
+                if (child.Text.Equals(index))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public static ITree GetChild(this ITree tree, string index)
         {
             for (int i = 0; i < tree.ChildCount; i++)
@@ -21,22 +34,23 @@ namespace Level14.BoardGameRules
             throw new ArgumentException(string.Format("Node {0} doesn't have child {1}!", tree.Text, index));
         }
 
-        public static int GetIntValue(this ITree tree)
+        public static ITree GetOnlyChild(this ITree tree)
         {
             if (tree.ChildCount != 1)
             {
                 throw new ArgumentException(string.Format("Node {0} has {1} children, must have exactly 1!", tree.Text, tree.ChildCount));
             }
-            return int.Parse(tree.GetChild(0).Text);
+            return tree.GetChild(0);
         }
 
-        public static Coords GetCoordsValue(this ITree tree)
+        public static string FileCoords(this ITree tree)
         {
-            if (tree.ChildCount == 0)
-            {
-                throw new ArgumentException(string.Format("Node {0} has no children, must have at least 1!", tree.Text));
-            }
-            return Coords.Parse(tree);
+            return tree.Line.ToString() + ":" + tree.CharPositionInLine.ToString();
+        }
+
+        public static Expression ParseExpr(this ITree tree)
+        {
+            return Expression.Parse(tree);
         }
     }
 }
