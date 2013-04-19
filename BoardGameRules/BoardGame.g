@@ -3,12 +3,22 @@ grammar BoardGame;
 options {
     language=CSharp3;
     output=AST;
+	backtrack=true;
 }
 
 tokens {
+	EVENT;
+	EVENTS;
+	EVENTTYPE;
+	EVENTTYPES;
+	FUNCCALL;
+	IF;
+	IF_CONDITION;
+	IF_ACTION;
 	LIST;
 	LIT_COORDS;
 	LIT_INT;
+	MEMBER_ACCESS;
 	MOVE_FROM;
 	MOVE_OPTIONS;
 	MOVE_TO;
@@ -19,6 +29,7 @@ tokens {
 	SETTINGS;
 	STARTINGPIECES;
 	STARTINGBOARD;
+	STATEMENTS;
 }
 
 @namespace { Level14.BoardGameRules }
@@ -26,7 +37,7 @@ tokens {
 
 // Lexer rules:
 
-NAME: ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ;
+NAME: ('a'..'z'|'A'..'Z'|'$') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ;
 
 PLACEHOLDER: '_';
 
@@ -42,24 +53,43 @@ Comment: '#' ~( '\r' | '\n' )*
 // Parser rules:
 
 int: INT -> ^(LIT_INT INT);
+name: NAME -> ^(REF NAME);
 
-ref: NAME -> ^(REF NAME);
+ref:
+	  name '.' ref -> ^(MEMBER_ACCESS name ref)
+	| functionCall
+	| name;
 
 intRef: int | ref;
 
-addExpr: intRef '+' intExpr -> ^('+' intRef intExpr );
-subExpr: intRef '-' intExpr -> ^('-' intRef intExpr );
-
-intExpr: intRef | addExpr | subExpr;
-
-intExprP: intExpr | PLACEHOLDER;
-
-coord: '{' intExprP (',' intExprP )* '}' -> ^(LIT_COORDS intExprP+);
+functionCall: name '(' expr? (',' expr)* ')' -> ^(FUNCCALL name ^(LIST expr*) );
 
 namelist_comma: NAME (',' NAME) -> NAME+;
 
+addExpr: intRef '+' intExpr -> ^('+' intRef intExpr );
+subExpr: intRef '-' intExpr -> ^('-' intRef intExpr );
+intExpr: addExpr | subExpr | intRef;
+intExprP: intExpr | PLACEHOLDER;
+
+gteExpr: intExpr '>=' intExpr -> ^('>=' intExpr+);
+boolExpr: gteExpr | functionCall;
+
+coord: '{' intExprP (',' intExprP )* '}' -> ^(LIT_COORDS intExprP+);
 playerRef: 'Player' '(' intExpr ')' -> ^(PLAYERREF intExpr);
 
+expr:
+	  playerRef
+	| coord
+	| boolExpr
+	| intExpr;
+
+
+ifBlock:
+	'If' boolExpr 'Then' statement+ 'End' -> ^(IF ^(IF_CONDITION boolExpr) ^(IF_ACTION statement+) );
+
+statement:
+	functionCall ';' -> functionCall |
+	ifBlock;
 settingsRow:
 	(
 	  NAME ':' int -> ^(NAME int)
@@ -88,4 +118,10 @@ moveRow:
 
 moves: 'Moves' '(' moveRow+ ')' -> ^(MOVES moveRow+);
 
-sentence: settings startingBoard? moves EOF;
+eventType: playerRef '.' NAME -> ^(EVENTTYPE playerRef NAME);
+
+event: eventType ( ',' eventType )* '(' statement+ ')' -> ^(EVENT ^(EVENTTYPES eventType+)  ^(STATEMENTS statement+) );
+
+events: 'Events' '(' event+ ')' -> ^(EVENTS event+);
+
+sentence: settings startingBoard? moves events EOF;

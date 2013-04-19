@@ -43,7 +43,6 @@ StartingBoard (
 )
 
 Moves (
-# x,y,z -> helyi kontextusban hivatkozás a Target[0,1,2]-re
     dog: {_, _} -> Empty {x+1, y+1};
     dog: {_, _} -> Empty {x-1, y+1};
     wolf: {_, _} -> Empty {x+1, y+1};
@@ -51,6 +50,22 @@ Moves (
     wolf: {_, _} -> Empty {x+1, y-1};
     wolf: {_, _} -> Empty {x-1, y-1};
 )
+
+Events (
+    Player(1).CannotMove (
+        Win(Player(1));
+    )
+    Player(2).CannotMove (
+        Win(Player(1));
+    )
+    Player(1).FinishedMove,
+    Player(2).FinishedMove (
+        If Min(Pieces, Player(1), y) >= $wolf.y Then
+            Win(Player(2));
+        End
+    )
+)
+
 ";
 
             try
