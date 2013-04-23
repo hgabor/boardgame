@@ -37,7 +37,7 @@ StartingBoard (
         dog: {7, 1};
     )
     Player(2) (
-        wolf: {2, 8};
+        wolf $wolf: {2, 8};
 #        $wolf = wolf: ChoosePosition(Player(2), p => Empty(p));
     )
 )

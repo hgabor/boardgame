@@ -5,25 +5,40 @@ using System.Text;
 
 namespace Level14.BoardGameRules
 {
-    class Context
+    public class Context
     {
+        Context parent;
+        internal Game Game { get; private set; }
         Dictionary<string, object> vars = new Dictionary<string, object>();
 
-        public Context() { }
+        internal Context(Game g) {
+            this.Game = g;
+        }
 
-        public object GetVariable(string name) {
+        internal Context(Context parent)
+        {
+            this.parent = parent;
+            this.Game = parent.Game;
+        }
+
+        internal virtual object GetVariable(string name) {
             object ret;
             if (!vars.TryGetValue(name, out ret))
             {
-                //Try parent...
-                return null;
+                if (parent != null) return parent.GetVariable(name);
+                else return null;
             }
             return ret;
         }
 
-        public void SetVariable(string name, object value)
+        internal void SetVariable(string name, object value)
         {
             vars[name] = value;
+        }
+
+        internal Player GetPlayer(int i)
+        {
+            return Game.GetPlayer(i);
         }
     }
 }

@@ -22,6 +22,21 @@ namespace Level14.BoardGameRules
             parsers.Add(op, parser);
         }
 
+        protected delegate Expression BinaryConstructor(Expression lhs, Expression rhs);
+        protected static void RegisterBinaryParser(string op, BinaryConstructor ctr)
+        {
+            if (parsers.ContainsKey(op))
+            {
+                throw new ArgumentException("Operator " + op + " is already registered!");
+            }
+            parsers.Add(op, tree =>
+            {
+                Expression lhs = tree.GetChild(0).ParseExpr();
+                Expression rhs = tree.GetChild(1).ParseExpr();
+                return ctr(lhs, rhs);
+            });
+        }
+
         public static Expression Parse(ITree tree)
         {
             string key = tree.Text;

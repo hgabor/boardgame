@@ -65,5 +65,10 @@ namespace Level14.BoardGameRules
         {
             return board.AsEnumerable();
         }
+
+        public IEnumerable<Piece> GetPiecesWithoutCoords()
+        {
+            return board.Values.AsEnumerable();
+        }
     }
 }

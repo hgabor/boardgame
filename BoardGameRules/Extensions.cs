@@ -52,5 +52,20 @@ namespace Level14.BoardGameRules
         {
             return Expression.Parse(tree);
         }
+
+        public static Statement ParseStmt(this ITree tree)
+        {
+            return Statement.Parse(tree);
+        }
+
+        public static Statement ParseStmtList(this ITree tree)
+        {
+            var list = new StatementList();
+            for (int i = 0; i < tree.ChildCount; i++)
+            {
+                list.Add(tree.GetChild(i).ParseStmt());
+            }
+            return list;
+        }
     }
 }

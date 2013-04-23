@@ -30,6 +30,7 @@ tokens {
 	STARTINGPIECES;
 	STARTINGBOARD;
 	STATEMENTS;
+	TAG;
 }
 
 @namespace { Level14.BoardGameRules }
@@ -100,7 +101,9 @@ settingsRow:
 
 settings: 'Settings' '(' settingsRow+ ')' -> ^(SETTINGS settingsRow+);
 
-pieceStartingCoords: NAME ':' coord ';' -> ^(NAME coord);
+pieceStartingCoords:
+	NAME ':' coord ';' -> ^(NAME coord) |
+	NAME NAME ':' coord ';' -> ^(NAME coord ^(TAG NAME)) ;
 
 startingBoardRow:
 	(

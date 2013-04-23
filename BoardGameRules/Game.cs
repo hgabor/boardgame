@@ -21,7 +21,26 @@ namespace Level14.BoardGameRules
         private List<string> pieceTypes = new List<string>();
         private List<Player> players = new List<Player>();
         private List<MoveRule> moveRules = new List<MoveRule>();
-        private Player GetPlayer(int i)
+
+        private Context globalContext;
+
+        class GlobalContext : Context
+        {
+            internal GlobalContext(Game g) : base(g) { }
+
+            internal override object GetVariable(string name)
+            {
+                switch (name)
+                {
+                    case "Pieces":
+                        return Game.board.GetPiecesWithoutCoords();
+                    default:
+                        return base.GetVariable(name);
+                }
+            }
+        }
+
+        internal Player GetPlayer(int i)
         {
             return players[i - 1];
         }
@@ -57,7 +76,7 @@ namespace Level14.BoardGameRules
                     throw new InvalidGameException(string.Format("Number of errors: {0} \n\n{1}", errors.Length, msg));
                 }
 
-                // Set player count
+                globalContext = new GlobalContext(this);
 
                 CommonTree t = (CommonTree)root.Tree;
 
@@ -91,11 +110,16 @@ namespace Level14.BoardGameRules
                                     {
                                         throw new InvalidGameException(pieceNode.FileCoords() + " - Invalid piece type '" + type + "'");
                                     }
-                                    Coords coords = (Coords)pieceNode.GetOnlyChild().ParseExpr().Eval(null);
-                                    var p = new Piece(type, owner);
+                                    Coords coords = (Coords)pieceNode.GetChild("LIT_COORDS").ParseExpr().Eval(null);
+                                    var p = new Piece(type, owner, this);
                                     if (!board.TryPut(coords, p))
                                     {
                                         throw new InvalidGameException(pieceNode.FileCoords() + " - Invalid coords for '" + type + "'");
+                                    }
+                                    if (pieceNode.HasChild("TAG"))
+                                    {
+                                        string tag = pieceNode.GetChild("TAG").GetOnlyChild().Text;
+                                        globalContext.SetVariable(tag, p);
                                     }
                                 }
 
@@ -120,6 +144,32 @@ namespace Level14.BoardGameRules
 
                     var rule = new MoveRule(piece, moveFrom, moveTo, emptyTarget);
                     moveRules.Add(rule);
+                }
+
+                for (int i = 0; i < t.GetChild("EVENTS").ChildCount; i++)
+                {
+                    var eventNode = t.GetChild("EVENTS").GetChild(i);
+                    var stmt = eventNode.GetChild("STATEMENTS").ParseStmtList();
+
+                    // Register event for all players
+                    for (int eventI = 0; eventI < eventNode.GetChild("EVENTTYPES").ChildCount; eventI++)
+                    {
+                        var eventTypeNode = eventNode.GetChild("EVENTTYPES").GetChild(eventI);
+                        Player p = (Player)eventTypeNode.GetChild("PLAYERREF").ParseExpr().Eval(new Context(this));
+                        string eventType = eventTypeNode.GetChild(1).Text;
+                        switch (eventType)
+                        {
+                            case "CannotMove":
+                                p.SetCannotMove(stmt);
+                                break;
+                            case "FinishedMove":
+                                p.SetPostMove(stmt);
+                                break;
+                            default:
+                                throw new InvalidGameException("Invalid event: " + eventType);
+                        }
+                    }
+
                 }
 
                 currentPlayer = 0;
@@ -151,7 +201,7 @@ namespace Level14.BoardGameRules
             if (!board.IsInsideBoard(from)) return false;
             if (!board.IsInsideBoard(to)) return false;
 
-            Context ctx = new Context();
+            Context ctx = new Context(this);
             // Special vars x, y are from coordinates
             ctx.SetVariable("x", from[0]);
             ctx.SetVariable("y", from[1]);
@@ -191,6 +241,7 @@ namespace Level14.BoardGameRules
                     throw new InvalidGameException("Cannot move to " + to.ToString() + ", piece " + oppPiece.ToString() + " is in the way!");
                 }
 
+                CurrentPlayer.PostMove(ctx);
                 PostMoveActions();
 
                 // Move was performed
