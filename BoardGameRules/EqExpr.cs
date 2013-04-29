@@ -5,10 +5,10 @@ using System.Text;
 
 namespace Level14.BoardGameRules
 {
-    class GTEExpr : Expression
+    class EqExpr:Expression
     {
         Expression lhs, rhs;
-        public GTEExpr(Expression lhs, Expression rhs)
+        public EqExpr(Expression lhs, Expression rhs)
         {
             this.lhs = lhs;
             this.rhs = rhs;
@@ -16,14 +16,12 @@ namespace Level14.BoardGameRules
 
         public override object Eval(Context c)
         {
-            int l = (int)lhs.Eval(c);
-            int r = (int)rhs.Eval(c);
-            return l >= r;
+            return lhs.Eval(c).Equals(rhs.Eval(c));
         }
 
-        static GTEExpr()
+        static EqExpr()
         {
-            Expression.RegisterBinaryParser(">=", (l, r) => new GTEExpr(l, r));
+            Expression.RegisterBinaryParser("=", (l, r) => new EqExpr(l, r));
         }
     }
 }

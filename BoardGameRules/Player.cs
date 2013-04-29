@@ -41,5 +41,9 @@ namespace Level14.BoardGameRules
         {
             return "player" + ID.ToString();
         }
+
+        public bool Won { get; internal set; }
+        public bool Tied { get; internal set; }
+        public bool Lost { get; internal set; }
     }
 }

@@ -28,8 +28,8 @@ namespace Level14.BoardGameRules
             }
             else
             {
-                errors.Add(e.ToString());
-            } 
+                errors.Add(string.Format("{0}:{1} - Error with token {2}\n  {3}", e.Line, e.CharPositionInLine, e.Token.Text, e.ToString()));
+            }
             base.ReportError(e);
         }
     }

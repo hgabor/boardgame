@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 
 namespace Level14.BoardGameRules
 {
-    public class Game
+    public partial class Game
     {
         public int PlayerCount { get { return players.Count; } }
         private int currentPlayer;
@@ -21,6 +21,27 @@ namespace Level14.BoardGameRules
         private List<string> pieceTypes = new List<string>();
         private List<Player> players = new List<Player>();
         private List<MoveRule> moveRules = new List<MoveRule>();
+
+        public bool GameOver
+        {
+            get
+            {
+                foreach (var p in players)
+                {
+                    if (p.Won || p.Tied) return true;
+                }
+                return false;
+            }
+        }
+
+        public IEnumerable<Player> Winners
+        {
+            get
+            {
+                // If there are winners, they win
+                return players.FindAll(p => p.Won);
+            }
+        }
 
         private Context globalContext;
 
@@ -57,6 +78,8 @@ namespace Level14.BoardGameRules
             return board.GetPieces();
         }
 
+        partial void InitGlobals();
+
         public Game(string rules)
         {
             try
@@ -77,13 +100,14 @@ namespace Level14.BoardGameRules
                 }
 
                 globalContext = new GlobalContext(this);
+                InitGlobals();
 
                 CommonTree t = (CommonTree)root.Tree;
 
-                int playerCount = (int)t.GetChild("SETTINGS").GetChild("PlayerCount").GetOnlyChild().ParseExpr().Eval(null);
+                int playerCount = (int)t.GetChild("SETTINGS").GetChild("PlayerCount").GetOnlyChild().ParseExpr().Eval(globalContext);
                 for (int i = 0; i < playerCount; i++) players.Add(new Player(i+1));
 
-                var size = (Coords)t.GetChild("SETTINGS").GetChild("BoardDimensions").GetOnlyChild().ParseExpr().Eval(null);
+                var size = (Coords)t.GetChild("SETTINGS").GetChild("BoardDimensions").GetOnlyChild().ParseExpr().Eval(globalContext);
                 board = new Board(size);
 
                 for (int i = 0; i < t.GetChild("SETTINGS").GetChild("PieceTypes").ChildCount; i++)
@@ -99,8 +123,9 @@ namespace Level14.BoardGameRules
                         switch (ch.Text)
                         {
                             case "STARTINGPIECES":
-                                int ownerInt = (int)ch.GetChild("PLAYERREF").GetOnlyChild().ParseExpr().Eval(null);
+                                int ownerInt = (int)ch.GetChild("PLAYERREF").GetOnlyChild().ParseExpr().Eval(globalContext);
                                 Player owner = GetPlayer(ownerInt);
+                                currentPlayer = ownerInt - 1;
 
                                 for (int j = 0; j < ch.GetChild("LIST").ChildCount; j++)
                                 {
@@ -110,7 +135,20 @@ namespace Level14.BoardGameRules
                                     {
                                         throw new InvalidGameException(pieceNode.FileCoords() + " - Invalid piece type '" + type + "'");
                                     }
-                                    Coords coords = (Coords)pieceNode.GetChild("LIT_COORDS").ParseExpr().Eval(null);
+                                    Coords coords;
+                                    // Only has one coord
+                                    if (pieceNode.HasChild("LIT_COORDS")) {
+                                        coords = (Coords)pieceNode.GetChild("LIT_COORDS").ParseExpr().Eval(globalContext);
+                                    }
+                                    else if (pieceNode.HasChild("LIT_SET"))
+                                    {
+                                        var set = (IEnumerable<object>)pieceNode.GetChild("LIT_SET").ParseExpr().Eval(globalContext);
+                                        coords = M.ChoosePlace(globalContext, type, set);
+                                    }
+                                    else
+                                    {
+                                        throw new Exception("Cannot happen");
+                                    }
                                     var p = new Piece(type, owner, this);
                                     if (!board.TryPut(coords, p))
                                     {
@@ -201,7 +239,7 @@ namespace Level14.BoardGameRules
             if (!board.IsInsideBoard(from)) return false;
             if (!board.IsInsideBoard(to)) return false;
 
-            Context ctx = new Context(this);
+            Context ctx = new Context(this.globalContext);
             // Special vars x, y are from coordinates
             ctx.SetVariable("x", from[0]);
             ctx.SetVariable("y", from[1]);
@@ -253,7 +291,35 @@ namespace Level14.BoardGameRules
 
         private void PostMoveActions()
         {
-            currentPlayer = (currentPlayer + 1) % PlayerCount;
+            int startPlayer = currentPlayer;
+
+            do
+            {
+                currentPlayer = (currentPlayer + 1) % PlayerCount;
+                if (currentPlayer == startPlayer)
+                {
+                    if (CurrentPlayer.Lost)
+                    {
+                        CurrentPlayer.Tied = true;
+                    }
+                    else
+                    {
+                        CurrentPlayer.Won = true;
+                    }
+                    return;
+                }
+            } while (CurrentPlayer.Lost);
+        }
+
+        public delegate Coords PlaceAction(string title, Player player, IEnumerable<Coords> coords);
+        static PlaceAction placing;
+        public static void SetPlacing(PlaceAction value)
+        {
+            placing = value;
+        }
+        internal static Coords ChoosePlace(string title, Player player, IEnumerable<Coords> coords) {
+            if (placing == null) throw new InvalidOperationException("You must specify a Placing function to play this game!");
+            return placing(title, player, coords);
         }
 
         static Game()

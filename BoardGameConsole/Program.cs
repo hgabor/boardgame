@@ -20,6 +20,35 @@ namespace Level14.BoardGameConsole
             Console.WriteLine("Current player: {0}", game.CurrentPlayer);
         }
 
+        public static Coords Place(string title, Player p, IEnumerable<Coords> coords) {
+            Console.WriteLine("{0}, choose a place for {1}", p, title);
+            Console.WriteLine("Places: ");
+            int i = 0;
+            foreach (Coords c in coords)
+            {
+                i++;
+                Console.Write("{0}  ", c);
+                if (i == 4)
+                {
+                    Console.WriteLine();
+                    i = 0;
+                }
+            }
+            while (true)
+            {
+                string input = Console.ReadLine().ToLower();
+                if (input.Length != 2)
+                {
+                    Console.WriteLine('?');
+                    continue;
+                }
+                int x = input[0] - '0', y = input[1] - '0';
+                Coords to = new Coords(x, y);
+                if (coords.Any(c => Coords.Match(c, to))) return to;
+                Console.WriteLine("Invalid coords!");
+            }
+        }
+
         static void Main(string[] args)
         {
             string toParse = @"
@@ -37,8 +66,7 @@ StartingBoard (
         dog: {7, 1};
     )
     Player(2) (
-        wolf $wolf: {2, 8};
-#        $wolf = wolf: ChoosePosition(Player(2), p => Empty(p));
+        wolf $wolf: [{2,8}, {4,8}, {6,8}, {8,8}];
     )
 )
 
@@ -60,8 +88,8 @@ Events (
     )
     Player(1).FinishedMove,
     Player(2).FinishedMove (
-        If Min(Pieces, Player(1), y) >= $wolf.y Then
-            Win(Player(2));
+        If Min([Select y From Pieces Where Owner = Player(1)]) >= $wolf.y Then
+              Win(Player(2));
         End
     )
 )
@@ -70,6 +98,7 @@ Events (
 
             try
             {
+                Game.SetPlacing(Program.Place);
                 Game game = new Game(toParse);
 
                 Console.WriteLine("Game properties: ");
@@ -77,13 +106,13 @@ Events (
                 Console.WriteLine("  Board size = {0}", game.Size);
 
                 // Game loop:
-                while (true)
+                while (!game.GameOver)
                 {
                     PrintBoard(game);
                     string input = Console.ReadLine().ToLower();
                     if (input == "q")
                     {
-                        break;
+                        return;
                     }
                     if (input.Length != 4)
                     {
@@ -101,6 +130,17 @@ Events (
                         Console.WriteLine("Invalid move!");
                     }
                 }
+
+                var winners = game.Winners;
+                if (winners.Count() == 0)
+                {
+                    Console.WriteLine("Tie!");
+                }
+                else
+                {
+                    Console.WriteLine("Winner(s): {0}", string.Join(", ", winners));
+                }
+                Console.ReadLine();
             }
             catch (Exception e)
             {

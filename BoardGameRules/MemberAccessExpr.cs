@@ -19,7 +19,7 @@ namespace Level14.BoardGameRules
         public override object Eval(Context c)
         {
             Context parentObj = (Context)parent.Eval(c);
-            return member.Eval(new Context(parentObj.Game));
+            return member.Eval(parentObj);
         }
 
         static MemberAccessExpr()

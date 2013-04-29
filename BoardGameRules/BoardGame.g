@@ -18,6 +18,7 @@ tokens {
 	LIST;
 	LIT_COORDS;
 	LIT_INT;
+	LIT_SET;
 	MEMBER_ACCESS;
 	MOVE_FROM;
 	MOVE_OPTIONS;
@@ -26,6 +27,9 @@ tokens {
 	OP_MOVE;
 	PLAYERREF;
 	REF;
+	SELECT;
+	SELECT_FROM;
+	SELECT_WHERE;
 	SETTINGS;
 	STARTINGPIECES;
 	STARTINGBOARD;
@@ -37,6 +41,20 @@ tokens {
 
 
 // Lexer rules:
+
+OP_ADD: '+';
+OP_AND: 'And';
+OP_DIV: '/';
+OP_EQ: '=';
+OP_GT: '>';
+OP_GTE: '>=';
+OP_LT: '<';
+OP_LTE: '<=';
+OP_MOD: '%';
+OP_MUL: '*';
+OP_NE: '!=';
+OP_OR: 'Or';
+OP_SUB: '-';
 
 NAME: ('a'..'z'|'A'..'Z'|'$') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ;
 
@@ -58,6 +76,7 @@ name: NAME -> ^(REF NAME);
 
 ref:
 	  name '.' ref -> ^(MEMBER_ACCESS name ref)
+	| playerRef
 	| functionCall
 	| name;
 
@@ -67,26 +86,30 @@ functionCall: name '(' expr? (',' expr)* ')' -> ^(FUNCCALL name ^(LIST expr*) );
 
 namelist_comma: NAME (',' NAME) -> NAME+;
 
-addExpr: intRef '+' intExpr -> ^('+' intRef intExpr );
-subExpr: intRef '-' intExpr -> ^('-' intRef intExpr );
-intExpr: addExpr | subExpr | intRef;
-intExprP: intExpr | PLACEHOLDER;
 
-gteExpr: intExpr '>=' intExpr -> ^('>=' intExpr+);
-boolExpr: gteExpr | functionCall;
+// Expressions:
 
-coord: '{' intExprP (',' intExprP )* '}' -> ^(LIT_COORDS intExprP+);
-playerRef: 'Player' '(' intExpr ')' -> ^(PLAYERREF intExpr);
+coord: '{' placeholderExpr (',' placeholderExpr )* '}' -> ^(LIT_COORDS placeholderExpr+);
+playerRef: 'Player' '(' expr ')' -> ^(PLAYERREF expr);
 
-expr:
-	  playerRef
-	| coord
-	| boolExpr
-	| intExpr;
+selectExpr: '[' 'Select' name 'From' ref ( 'Where' expr )? ']' -> ^(SELECT name ^(SELECT_FROM ref) ^(SELECT_WHERE expr));
+setLiteral: '[' (expr (',' expr)* ','?)? ']' -> ^(LIT_SET expr+);
+setExpr: selectExpr | setLiteral;
 
+expr: andExpr (OP_OR andExpr)*;
+andExpr: relExpr (OP_AND^ relExpr)*;
+relExpr: addExpr ((OP_EQ|OP_NE|OP_GT|OP_LT|OP_GTE|OP_LTE)^ addExpr)*;
+addExpr: mulExpr ((OP_ADD|OP_SUB)^ mulExpr)*;
+mulExpr: signExpr ((OP_MUL|OP_DIV|OP_MOD)^ signExpr)*;
+signExpr:
+	OP_SUB primeExpr -> ^(OP_SUB primeExpr) |
+	OP_ADD? primeExpr -> primeExpr;
+
+primeExpr: int | coord | ref | setExpr | '(' expr ')';
+placeholderExpr: '_' | expr;
 
 ifBlock:
-	'If' boolExpr 'Then' statement+ 'End' -> ^(IF ^(IF_CONDITION boolExpr) ^(IF_ACTION statement+) );
+	'If' expr 'Then' statement+ 'End' -> ^(IF ^(IF_CONDITION expr) ^(IF_ACTION statement+) );
 
 statement:
 	functionCall ';' -> functionCall |
@@ -103,7 +126,9 @@ settings: 'Settings' '(' settingsRow+ ')' -> ^(SETTINGS settingsRow+);
 
 pieceStartingCoords:
 	NAME ':' coord ';' -> ^(NAME coord) |
-	NAME NAME ':' coord ';' -> ^(NAME coord ^(TAG NAME)) ;
+	NAME ':' setExpr ';' -> ^(NAME setExpr) |
+	NAME NAME ':' coord ';' -> ^(NAME coord ^(TAG NAME)) |
+	NAME NAME ':' setExpr ';' -> ^(NAME setExpr ^(TAG NAME)) ;
 
 startingBoardRow:
 	(

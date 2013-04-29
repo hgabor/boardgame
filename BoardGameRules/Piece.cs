@@ -31,6 +31,10 @@ namespace Level14.BoardGameRules
                 }
                 return "-1"; // Piece is not on the board
             }
+            else if (name == "Owner")
+            {
+                return Owner;
+            }
             else
             {
                 return base.GetVariable(name);

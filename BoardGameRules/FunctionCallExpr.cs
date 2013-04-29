@@ -19,10 +19,11 @@ namespace Level14.BoardGameRules
         public override object Eval(Context c)
         {
             Function f = (Function)name.Eval(c);
-            object[] args = new object[p.Length];
+            object[] args = new object[p.Length + 1];
+            args[0] = c;
             for (int i = 0; i < p.Length; i++)
             {
-                args[i] = p[i].Eval(c);
+                args[i + 1] = p[i].Eval(c);
             }
             return f.Call(args);
         }
