@@ -29,7 +29,7 @@ namespace Level14.BoardGameRules
                         else return kvp.Key[1];
                     }
                 }
-                return "-1"; // Piece is not on the board
+                return -1; // Piece is not on the board
             }
             else if (name == "Owner")
             {

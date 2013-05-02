@@ -14,6 +14,8 @@ namespace Level14.BoardGameRules
 
         internal bool TargetMustBeEmpty { get; private set; }
 
+        internal bool OffboardRule { get { return From == null || To == null; } }
+
         public MoveRule(string piece, CoordExpr from, CoordExpr to, bool targetEmpty)
         {
             PieceType = piece;

@@ -6,6 +6,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoardGameConsole", "BoardGameConsole\BoardGameConsole.csproj", "{5BA28C5D-0B73-4F23-BE4A-6E5F4ACE86B7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoardGameGUI", "BoardGameGUI\BoardGameGUI.csproj", "{BDBEE87C-71DF-4180-A266-7D050AE7E8F6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{999BF46D-4B12-4C5D-BEE0-B8A3AE209BC1} = {999BF46D-4B12-4C5D-BEE0-B8A3AE209BC1}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

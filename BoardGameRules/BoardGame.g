@@ -56,6 +56,8 @@ OP_NE: '!=';
 OP_OR: 'Or';
 OP_SUB: '-';
 
+OFFBOARD: 'Offboard';
+
 NAME: ('a'..'z'|'A'..'Z'|'$') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ;
 
 PLACEHOLDER: '_';
@@ -125,10 +127,10 @@ settingsRow:
 settings: 'Settings' '(' settingsRow+ ')' -> ^(SETTINGS settingsRow+);
 
 pieceStartingCoords:
+	NAME ':' 'Offboard' ';' -> ^(NAME 'Offboard') |
 	NAME ':' coord ';' -> ^(NAME coord) |
-	NAME ':' setExpr ';' -> ^(NAME setExpr) |
-	NAME NAME ':' coord ';' -> ^(NAME coord ^(TAG NAME)) |
-	NAME NAME ':' setExpr ';' -> ^(NAME setExpr ^(TAG NAME)) ;
+	NAME NAME ':' 'Offboard' ';' -> ^(NAME 'Offboard' ^(TAG NAME)) |
+	NAME NAME ':' coord ';' -> ^(NAME coord ^(TAG NAME)) ;
 
 startingBoardRow:
 	(
@@ -136,10 +138,22 @@ startingBoardRow:
 	)
 	;
 
-startingBoard: 'StartingBoard' '(' startingBoardRow+ ')' -> ^(STARTINGBOARD startingBoardRow+);
+invalidBoardRow:
+	(
+		'Invalid' '(' (expr ';')+ ')'
+	);
+
+startingBoard: 'StartingBoard' '(' invalidBoardRow? startingBoardRow+ ')' -> ^(STARTINGBOARD startingBoardRow+);
+
+coordOffboard: coord | OFFBOARD;
+
+moveThen:
+	'Then' statement+ 'End' -> ^(STATEMENTS statement+);
 
 moveOp:
-	coord '->' 'Empty'? coord -> ^( OP_MOVE ^(MOVE_FROM coord) ^(MOVE_TO coord) ^(MOVE_OPTIONS 'Empty'?) );
+	from=coordOffboard '->' 'Empty'? to=coordOffboard moveThen?
+	->
+	^( OP_MOVE ^(MOVE_FROM $from) ^(MOVE_TO $to) ^(MOVE_OPTIONS 'Empty'?) moveThen? );
 
 moveRow:
 	NAME ':' moveOp ';' -> ^(NAME moveOp);

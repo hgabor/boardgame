@@ -1,8 +1,22 @@
-﻿<Window x:Class="BoardGameGUI.MainWindow"
+﻿<Window xmlns:my="clr-namespace:Level14.BoardGameGUI"  x:Class="Level14.BoardGameGUI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" Height="350" Width="525">
-    <Grid>
-        
-    </Grid>
+        Title="MainWindow" Height="350" Width="525" Loaded="Window_Loaded">
+    <StackPanel Background="DarkGreen">
+        <ToolBarTray Height="26" Name="toolBarTray" VerticalAlignment="Top">
+            <ToolBar Band="1" BandIndex="1">
+                <Button Name="openButton" ToolTip="Open rulebook" Click="openButton_Click">
+                    <Image Source="Images/book.png" />
+                </Button>
+                <Separator />
+                <Button Name="newGameButton" ToolTip="New game" Click="newGameButton_Click">
+                    <Image Source="Images/new.png" />
+                </Button>
+            </ToolBar>
+        </ToolBarTray>
+
+        <my:GamePanel x:Name="gamePanel" HorizontalAlignment="Left" VerticalAlignment="Top" />
+
+        <my:OffboardPanel x:Name="offBoard" />
+    </StackPanel>
 </Window>

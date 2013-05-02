@@ -45,5 +45,30 @@ namespace Level14.BoardGameRules
         public bool Won { get; internal set; }
         public bool Tied { get; internal set; }
         public bool Lost { get; internal set; }
+
+        HashSet<Piece> pieces = new HashSet<Piece>();
+
+        internal void AddOffboard(Piece p)
+        {
+            pieces.Add(p);
+        }
+
+        internal bool RemoveOffBoard(Piece p)
+        {
+            if (pieces.Contains(p))
+            {
+                pieces.Remove(p);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public IEnumerable<Piece> GetOffboard()
+        {
+            return new HashSet<Piece>(pieces);
+        }
     }
 }

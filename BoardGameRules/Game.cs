@@ -135,22 +135,23 @@ namespace Level14.BoardGameRules
                                     {
                                         throw new InvalidGameException(pieceNode.FileCoords() + " - Invalid piece type '" + type + "'");
                                     }
-                                    Coords coords;
-                                    // Only has one coord
-                                    if (pieceNode.HasChild("LIT_COORDS")) {
+                                    Coords coords = null;
+                                    if (pieceNode.HasChild("LIT_COORDS"))
+                                    {
                                         coords = (Coords)pieceNode.GetChild("LIT_COORDS").ParseExpr().Eval(globalContext);
                                     }
-                                    else if (pieceNode.HasChild("LIT_SET"))
-                                    {
-                                        var set = (IEnumerable<object>)pieceNode.GetChild("LIT_SET").ParseExpr().Eval(globalContext);
-                                        coords = M.ChoosePlace(globalContext, type, set);
-                                    }
+                                    else if (pieceNode.HasChild("Offboard"))
+                                    { /* Do nothing */ }
                                     else
                                     {
                                         throw new Exception("Cannot happen");
                                     }
                                     var p = new Piece(type, owner, this);
-                                    if (!board.TryPut(coords, p))
+                                    if (coords == null)
+                                    {
+                                        CurrentPlayer.AddOffboard(p);
+                                    }
+                                    else if (!board.TryPut(coords, p))
                                     {
                                         throw new InvalidGameException(pieceNode.FileCoords() + " - Invalid coords for '" + type + "'");
                                     }
@@ -172,11 +173,19 @@ namespace Level14.BoardGameRules
                     string piece = moveNode.Text;
                     var moveOpNode = moveNode.GetChild("OP_MOVE");
                     var moveFromNode = moveOpNode.GetChild("MOVE_FROM");
-                    CoordExpr moveFrom = (CoordExpr)moveFromNode.GetOnlyChild().ParseExpr();
 
+                    CoordExpr moveFrom = null;
+                    CoordExpr moveTo = null;
+
+                    if (!moveFromNode.HasChild("Offboard"))
+                    {
+                        moveFrom = (CoordExpr)moveFromNode.GetOnlyChild().ParseExpr();
+                    }
                     var moveToNode = moveOpNode.GetChild("MOVE_TO");
-                    CoordExpr moveTo = (CoordExpr)moveToNode.GetOnlyChild().ParseExpr();
-
+                    if (!moveToNode.HasChild("Offboard"))
+                    {
+                        moveTo = (CoordExpr)moveToNode.GetOnlyChild().ParseExpr();
+                    }
                     var moveOptionsNode = moveOpNode.GetChild("MOVE_OPTIONS");
                     bool emptyTarget = moveOptionsNode.HasChild("Empty");
 
@@ -234,6 +243,58 @@ namespace Level14.BoardGameRules
             }
         }
 
+        public bool TryMakeMoveFromOffboard(Piece piece, Coords to)
+        {
+            // Coords are valid?
+            if (!board.IsInsideBoard(to)) return false;
+            Context ctx = new Context(this.globalContext);
+
+            // piece cannot be null
+            if (piece == null) return false;
+            // Cannot move opponent's piece
+            if (piece.Owner != CurrentPlayer) return false;
+
+            Piece oppPiece = board[to];
+            foreach (var rule in moveRules)
+            {
+                // Only offboard rules here
+                if (!(rule.From == null && rule.To != null)) continue;
+
+                // Rule must be applicable to current piece
+                if (rule.PieceType != piece.Type) continue;
+
+                // Target should be empty
+                if (rule.TargetMustBeEmpty && oppPiece != null) continue;
+
+                // Check coords
+                if (!CurrentPlayer.GetOffboard().Contains(piece)) continue;
+                if (!Coords.Match(to, (Coords)rule.To.Eval(ctx))) continue;
+
+                // Move is valid
+                // TODO: Here we should execute post-move actions.
+
+                // Perform the move
+                if (!CurrentPlayer.RemoveOffBoard(piece))
+                {
+                    // Original piece was removed, should not happen!
+                    throw new InvalidGameException("Cannot move from offboard, piece " + oppPiece.ToString() + " was removed!");
+                }
+                if (!board.TryPut(to, piece))
+                {
+                    // Piece was not captured
+                    throw new InvalidGameException("Cannot move to " + to.ToString() + ", piece " + oppPiece.ToString() + " is in the way!");
+                }
+
+                CurrentPlayer.PostMove(ctx);
+                PostMoveActions();
+
+                // Move was performed
+                return true;
+            }
+            // No suitable rule found.
+            return false;
+        }
+
         public bool TryMakeMove(Coords from, Coords to) {
             // Coords are valid?
             if (!board.IsInsideBoard(from)) return false;
@@ -253,6 +314,9 @@ namespace Level14.BoardGameRules
 
             foreach (var rule in moveRules)
             {
+                // No offboard rules here
+                if (rule.OffboardRule) continue;
+
                 // Rule must be applicable to current piece
                 if (rule.PieceType != piece.Type) continue;
 

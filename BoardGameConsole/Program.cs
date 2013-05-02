@@ -59,24 +59,30 @@ Settings (
 )
 
 StartingBoard (
-    Player(1) (
-        dog: {1, 1};
-        dog: {3, 1};
-        dog: {5, 1};
-        dog: {7, 1};
+    Invalid (
+       (x + y) % 2 = 0;
     )
     Player(2) (
-        wolf $wolf: [{2,8}, {4,8}, {6,8}, {8,8}];
+        dog: {2, 1};
+        dog: {4, 1};
+        dog: {6, 1};
+        dog: {8, 1};
+    )
+    Player(1) (
+        wolf $wolf: Offboard;
     )
 )
 
 Moves (
-    dog: {_, _} -> Empty {x+1, y+1};
-    dog: {_, _} -> Empty {x-1, y+1};
+    wolf: Offboard -> Empty {_, _} Then
+        NextPlayer(Player(1));
+    End;
     wolf: {_, _} -> Empty {x+1, y+1};
     wolf: {_, _} -> Empty {x-1, y+1};
     wolf: {_, _} -> Empty {x+1, y-1};
     wolf: {_, _} -> Empty {x-1, y-1};
+    dog: {_, _} -> Empty {x+1, y+1};
+    dog: {_, _} -> Empty {x-1, y+1};
 )
 
 Events (
@@ -88,8 +94,8 @@ Events (
     )
     Player(1).FinishedMove,
     Player(2).FinishedMove (
-        If Min([Select y From Pieces Where Owner = Player(1)]) >= $wolf.y Then
-              Win(Player(2));
+        If Min([Select y From Pieces Where Owner = Player(2)]) >= $wolf.y Then
+              Win(Player(1));
         End
     )
 )
@@ -119,15 +125,36 @@ Events (
                         Console.WriteLine('?');
                         continue;
                     }
-                    int fromX = input[0] - '0', fromY = input[1] - '0', toX = input[2] - '0', toY = input[3] - '0';
-                    Coords from = new Coords(fromX, fromY), to = new Coords(toX, toY);
-                    if (game.TryMakeMove(from, to))
+                    if (input.StartsWith("##"))
                     {
-                        Console.WriteLine("OK!");
+                        int toX = input[2] - '0', toY = input[3] - '0';
+                        Coords to = new Coords(toX, toY);
+                        // TODO: hardcoded to wolf
+                        var pieces = game.CurrentPlayer.GetOffboard();
+                        if (pieces.Count() == 0)
+                        {
+                            Console.WriteLine("No more wolves!");
+                            continue;
+                        }
+                        if (game.TryMakeMoveFromOffboard(pieces.First(), to)) {
+                            Console.WriteLine("OK!");
+                        }
+                        else {
+                            Console.WriteLine("Invalid move!");
+                        }
                     }
                     else
                     {
-                        Console.WriteLine("Invalid move!");
+                        int fromX = input[0] - '0', fromY = input[1] - '0', toX = input[2] - '0', toY = input[3] - '0';
+                        Coords from = new Coords(fromX, fromY), to = new Coords(toX, toY);
+                        if (game.TryMakeMove(from, to))
+                        {
+                            Console.WriteLine("OK!");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid move!");
+                        }
                     }
                 }
 
@@ -140,6 +167,7 @@ Events (
                 {
                     Console.WriteLine("Winner(s): {0}", string.Join(", ", winners));
                 }
+                PrintBoard(game);
                 Console.ReadLine();
             }
             catch (Exception e)
