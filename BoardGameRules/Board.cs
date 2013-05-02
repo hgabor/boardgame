@@ -70,5 +70,26 @@ namespace Level14.BoardGameRules
         {
             return board.Values.AsEnumerable();
         }
+
+        private void PossibleCoordsToArray(int[] coords, int dimension, List<Coords> outList)
+        {
+            if (dimension == Size.Dimension)
+            {
+                outList.Add(new Coords(coords));
+            }
+            for (int i = 1; i <= Size[dimension]; i++)
+            {
+                var newCoords = new List<int>(coords);
+                newCoords.Add(i);
+                PossibleCoordsToArray(newCoords.ToArray(), dimension + 1, outList);
+            }
+        }
+
+        public IEnumerable<Coords> EnumerateCoords()
+        {
+            var coords = new List<Coords>();
+            PossibleCoordsToArray(new int[0], 0, coords);
+            return coords;
+        }
     }
 }

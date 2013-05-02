@@ -83,20 +83,20 @@
     </Antlr3>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AddExpr.cs" />
+    <Compile Include="Expresssions\AddExpr.cs" />
     <Compile Include="Board.cs" />
     <Compile Include="BoardGameParser_public.cs" />
-    <Compile Include="SetExpr.cs" />
-    <Compile Include="ConstIntExpr.cs" />
+    <Compile Include="Expresssions\SetExpr.cs" />
+    <Compile Include="Expresssions\ConstIntExpr.cs" />
     <Compile Include="Context.cs" />
-    <Compile Include="CoordExpr.cs" />
-    <Compile Include="EqExpr.cs" />
-    <Compile Include="Expression.cs" />
+    <Compile Include="Expresssions\CoordExpr.cs" />
+    <Compile Include="Expresssions\EqExpr.cs" />
+    <Compile Include="Expresssions\Expression.cs" />
     <Compile Include="Coords.cs" />
-    <Compile Include="ExprStatement.cs" />
+    <Compile Include="Statements\ExprStatement.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Function.cs" />
-    <Compile Include="FunctionCallExpr.cs" />
+    <Compile Include="Expresssions\FunctionCallExpr.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="BoardGameLexer.cs">
       <AutoGen>True</AutoGen>
@@ -109,23 +109,23 @@
       <DependentUpon>BoardGame.g</DependentUpon>
     </Compile>
     <Compile Include="Game_globals.cs" />
-    <Compile Include="GTEExpr.cs" />
-    <Compile Include="IfStatement.cs" />
+    <Compile Include="Expresssions\GTEExpr.cs" />
+    <Compile Include="Statements\IfStatement.cs" />
     <Compile Include="InvalidGameException.cs" />
-    <Compile Include="MemberAccessExpr.cs" />
+    <Compile Include="Expresssions\MemberAccessExpr.cs" />
     <Compile Include="MoveRule.cs" />
     <Compile Include="MultiParentContext.cs" />
     <Compile Include="Piece.cs" />
-    <Compile Include="PlaceHolderExpr.cs" />
+    <Compile Include="Expresssions\PlaceHolderExpr.cs" />
     <Compile Include="PlaceHolderValue.cs" />
     <Compile Include="Player.cs" />
-    <Compile Include="PlayerRefExpr.cs" />
-    <Compile Include="ReferenceExpr.cs" />
-    <Compile Include="SelectExpr.cs" />
+    <Compile Include="Expresssions\PlayerRefExpr.cs" />
+    <Compile Include="Expresssions\ReferenceExpr.cs" />
+    <Compile Include="Expresssions\SelectExpr.cs" />
     <Compile Include="Set.cs" />
-    <Compile Include="Statement.cs" />
-    <Compile Include="StatementList.cs" />
-    <Compile Include="SubExpr.cs" />
+    <Compile Include="Statements\Statement.cs" />
+    <Compile Include="Statements\StatementList.cs" />
+    <Compile Include="Expresssions\SubExpr.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Antlr3.Runtime">

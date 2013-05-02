@@ -245,8 +245,6 @@ namespace Level14.BoardGameRules
 
         public bool TryMakeMoveFromOffboard(Piece piece, Coords to)
         {
-            // Coords are valid?
-            if (!board.IsInsideBoard(to)) return false;
             Context ctx = new Context(this.globalContext);
 
             // piece cannot be null
@@ -254,21 +252,17 @@ namespace Level14.BoardGameRules
             // Cannot move opponent's piece
             if (piece.Owner != CurrentPlayer) return false;
 
+            if (!MoveIsValidGlobal(null, to, ctx)) return false;
+
+
             Piece oppPiece = board[to];
             foreach (var rule in moveRules)
             {
                 // Only offboard rules here
-                if (!(rule.From == null && rule.To != null)) continue;
+                if (!rule.OffboardRule) continue;
 
-                // Rule must be applicable to current piece
-                if (rule.PieceType != piece.Type) continue;
+                if (!MoveIsValidForRule(rule, piece, null, to, ctx)) continue;
 
-                // Target should be empty
-                if (rule.TargetMustBeEmpty && oppPiece != null) continue;
-
-                // Check coords
-                if (!CurrentPlayer.GetOffboard().Contains(piece)) continue;
-                if (!Coords.Match(to, (Coords)rule.To.Eval(ctx))) continue;
 
                 // Move is valid
                 // TODO: Here we should execute post-move actions.
@@ -295,21 +289,68 @@ namespace Level14.BoardGameRules
             return false;
         }
 
+        internal bool MoveIsValidGlobal(Coords from, Coords to, Context ctx)
+        {
+            if (from != null && !board.IsInsideBoard(from)) return false;
+            if (to != null && !board.IsInsideBoard(to)) return false;
+            if (from == null && to == null) return false;
+
+            if (from != null)
+            {
+                Piece piece = board[from];
+
+                // Cannot move empty square
+                if (piece == null) return false;
+
+                // Cannot move opponent's piece
+                if (piece.Owner != CurrentPlayer) return false;
+
+                // Cannot stay in place
+                if (Coords.Match(from, to)) return false;
+            }
+
+            return true;
+        }
+
+        internal bool MoveIsValidForRule(MoveRule rule, Piece piece, Coords from, Coords to, Context ctx)
+        {
+            if (from != null) piece = board[from];
+            Piece oppPiece = board[to];
+
+            // Rule must be applicable to current piece
+            if (rule.PieceType != piece.Type) return false;
+
+            // Target should be empty
+            if (rule.TargetMustBeEmpty && oppPiece != null) return false;
+
+            if (rule.From == null)
+            {
+                if (!CurrentPlayer.GetOffboard().Contains(piece)) return false;
+                if (!Coords.Match(to, (Coords)rule.To.Eval(ctx))) return false;
+            }
+            else if (rule.To == null)
+            {
+                throw new NotImplementedException();
+            }
+            else
+            {
+                // Check coords
+                if (!Coords.Match(from, (Coords)rule.From.Eval(ctx))) return false;
+                if (!Coords.Match(to, (Coords)rule.To.Eval(ctx))) return false;
+            }
+            return true;
+        }
+
         public bool TryMakeMove(Coords from, Coords to) {
-            // Coords are valid?
-            if (!board.IsInsideBoard(from)) return false;
-            if (!board.IsInsideBoard(to)) return false;
 
             Context ctx = new Context(this.globalContext);
             // Special vars x, y are from coordinates
             ctx.SetVariable("x", from[0]);
             ctx.SetVariable("y", from[1]);
 
+            if (!MoveIsValidGlobal(from, to, ctx)) return false;
+
             Piece piece = board[from];
-            // Cannot move empty square
-            if (piece == null) return false;
-            // Cannot move opponent's piece
-            if (piece.Owner != CurrentPlayer) return false;
             Piece oppPiece = board[to];
 
             foreach (var rule in moveRules)
@@ -317,15 +358,7 @@ namespace Level14.BoardGameRules
                 // No offboard rules here
                 if (rule.OffboardRule) continue;
 
-                // Rule must be applicable to current piece
-                if (rule.PieceType != piece.Type) continue;
-
-                // Target should be empty
-                if (rule.TargetMustBeEmpty && oppPiece != null) continue;
-
-                // Check coords
-                if (!Coords.Match(from, (Coords)rule.From.Eval(ctx))) continue;
-                if (!Coords.Match(to, (Coords)rule.To.Eval(ctx))) continue;
+                if (!MoveIsValidForRule(rule, null, from, to, ctx)) continue;
 
                 // Move is valid
                 // TODO: Here we should execute post-move actions.
@@ -384,6 +417,56 @@ namespace Level14.BoardGameRules
         internal static Coords ChoosePlace(string title, Player player, IEnumerable<Coords> coords) {
             if (placing == null) throw new InvalidOperationException("You must specify a Placing function to play this game!");
             return placing(title, player, coords);
+        }
+
+        public struct MoveDef {
+            public string PieceType;
+            public Coords From;
+            public Coords To;
+
+            public override string ToString()
+            {
+                string from = From == null ? "Offboard" : From.ToString();
+                string to = From == null ? "Offboard" : To.ToString();
+                return string.Format("{0}: {1} -> {2}", PieceType, from, to);
+            }
+        }
+
+        public IEnumerable<MoveDef> EnumeratePossibleMoves()
+        {
+            HashSet<MoveDef> moves = new HashSet<MoveDef>();
+
+            foreach (var p in CurrentPlayer.GetOffboard())
+            {
+                foreach (var c in board.EnumerateCoords())
+                {
+                    foreach (var rule in this.moveRules)
+                    {
+                        if (rule.From != null) continue;
+                        Context ctx = new Context(globalContext);
+                        if (MoveIsValidGlobal(null, c, ctx) && MoveIsValidForRule(rule, p, null, c, ctx))
+                        {
+                            moves.Add(new MoveDef { PieceType = p.Type, From = null, To = c });
+                        }
+                    }
+                }
+            }
+            foreach (var from in board.EnumerateCoords())
+            {
+                foreach (var to in board.EnumerateCoords())
+                {
+                    foreach (var rule in this.moveRules)
+                    {
+                        if (rule.OffboardRule) continue;
+                        Context ctx = new Context(globalContext);
+                        if (MoveIsValidGlobal(from, to, ctx) && MoveIsValidForRule(rule, null, from, to, ctx))
+                        {
+                            moves.Add(new MoveDef { PieceType = board[from].Type, From = from, To = to });
+                        }
+                    }
+                }
+            }
+            return moves;
         }
 
         static Game()
