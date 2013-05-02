@@ -44,7 +44,17 @@ namespace Level14.BoardGameGUI
             }
         }
 
-        public Coords Highlighted { get; set; }
+        private HashSet<Coords> highlight = new HashSet<Coords>();
+
+        public void ClearHighlight()
+        {
+            highlight.Clear();
+        }
+
+        public void AddHighlight(Coords c)
+        {
+            highlight.Add(c);
+        }
 
         public class GamePanelSelectEventArgs : EventArgs
         {
@@ -71,7 +81,7 @@ namespace Level14.BoardGameGUI
                 for (int j = 0; j < size[1]; j++)
                 {
                     int myj = size[1] - j - 1;
-                    if (Highlighted != null && Coords.Match(Highlighted, new Coords(i+1, j+1)))
+                    if (highlight.Contains(new Coords(i+1, j+1)))
                     {
                         dc.DrawRectangle(Brushes.LightBlue, null, new Rect(i * 30, myj * 30, 30, 30));
                     }

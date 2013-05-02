@@ -12,6 +12,9 @@
                 <Button Name="newGameButton" ToolTip="New game" Click="newGameButton_Click">
                     <Image Source="Images/new.png" />
                 </Button>
+                <Separator />
+                <Label>Current player:</Label>
+                <Label Name="currentPlayerLabel">none</Label>
             </ToolBar>
         </ToolBarTray>
 

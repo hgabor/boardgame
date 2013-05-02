@@ -12,11 +12,13 @@ namespace Level14.BoardGameConsole
         public static void PrintBoard(Game game)
         {
             Console.WriteLine();
-            Console.WriteLine("Pieces:");
+            Console.WriteLine("Onboard:");
             foreach (KeyValuePair<Coords, Piece> kvp in game.GetPieces())
             {
                 Console.WriteLine("  {0} - {1}", kvp.Key, kvp.Value);
             }
+            Console.WriteLine("Offboard:");
+            Console.WriteLine("  " + string.Join(", ", game.CurrentPlayer.GetOffboard()));
             Console.WriteLine("Current player: {0}", game.CurrentPlayer);
         }
 
@@ -119,6 +121,14 @@ Events (
                     if (input == "q")
                     {
                         return;
+                    }
+                    if (input == "moves")
+                    {
+                        foreach (var move in game.EnumeratePossibleMoves())
+                        {
+                            Console.WriteLine(move.ToString());
+                        }
+                        continue;
                     }
                     if (input.Length != 4)
                     {

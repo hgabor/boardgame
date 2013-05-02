@@ -86,6 +86,7 @@
     <Compile Include="Expresssions\AddExpr.cs" />
     <Compile Include="Board.cs" />
     <Compile Include="BoardGameParser_public.cs" />
+    <Compile Include="Expresssions\ModExpr.cs" />
     <Compile Include="Expresssions\SetExpr.cs" />
     <Compile Include="Expresssions\ConstIntExpr.cs" />
     <Compile Include="Context.cs" />
@@ -93,6 +94,7 @@
     <Compile Include="Expresssions\EqExpr.cs" />
     <Compile Include="Expresssions\Expression.cs" />
     <Compile Include="Coords.cs" />
+    <Compile Include="MoveDefinition.cs" />
     <Compile Include="Statements\ExprStatement.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Function.cs" />

@@ -107,7 +107,7 @@ signExpr:
 	OP_SUB primeExpr -> ^(OP_SUB primeExpr) |
 	OP_ADD? primeExpr -> primeExpr;
 
-primeExpr: int | coord | ref | setExpr | '(' expr ')';
+primeExpr: int | coord | ref | setExpr | '(' expr ')' -> expr;
 placeholderExpr: '_' | expr;
 
 ifBlock:
@@ -140,10 +140,10 @@ startingBoardRow:
 
 invalidBoardRow:
 	(
-		'Invalid' '(' (expr ';')+ ')'
+		'Invalid' '(' (expr ';')+ ')' -> ^('Invalid' expr+ )
 	);
 
-startingBoard: 'StartingBoard' '(' invalidBoardRow? startingBoardRow+ ')' -> ^(STARTINGBOARD startingBoardRow+);
+startingBoard: 'StartingBoard' '(' invalidBoardRow? startingBoardRow+ ')' -> ^(STARTINGBOARD invalidBoardRow? startingBoardRow+);
 
 coordOffboard: coord | OFFBOARD;
 

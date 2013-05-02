@@ -39,6 +39,17 @@ namespace Level14.BoardGameGUI
             {
                 fromOffboard = value;
                 offBoard.Highlighted = value;
+                if (value == null)
+                {
+                    gamePanel.ClearHighlight();
+                }
+                else
+                {
+                    foreach (var md in game.EnumerateMovesFromOffboard(value))
+                    {
+                        gamePanel.AddHighlight(md.To);
+                    }
+                }
             }
         }
         Coords fromCoord;
@@ -51,11 +62,21 @@ namespace Level14.BoardGameGUI
             set
             {
                 fromCoord = value;
-                gamePanel.Highlighted = fromCoord;
+                if (value == null)
+                {
+                    gamePanel.ClearHighlight();
+                }
+                else
+                {
+                    gamePanel.AddHighlight(value);
+                    foreach (var md in game.EnumerateMovesFromCoord(value))
+                    {
+                        gamePanel.AddHighlight(md.To);
+                    }
+                }
             }
         }
         Coords toCoord;
-
 
         public MainWindow()
         {
@@ -155,6 +176,7 @@ namespace Level14.BoardGameGUI
             FromCoord = null;
             FromOffboard = null;
             toCoord = null;
+            currentPlayerLabel.Content = game.CurrentPlayer.ToString();
         }
 
         private void NewGame()
@@ -171,6 +193,8 @@ namespace Level14.BoardGameGUI
             gamePanel.InvalidateVisual();
 
             offBoard.Refresh();
+
+            currentPlayerLabel.Content = game.CurrentPlayer.ToString();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

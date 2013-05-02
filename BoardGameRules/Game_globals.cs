@@ -14,6 +14,11 @@ namespace Level14.BoardGameRules
                 return Game.ChoosePlace(title, ctx.Game.CurrentPlayer, coordSet);
             }
 
+            public static void NextPlayer(Context ctx, Player p)
+            {
+                ctx.Game.OverrideNextPlayer = p;
+            }
+
             public static object Min(Context ctx, IEnumerable<object> set) {
                 return set.Min();
             }
@@ -32,6 +37,7 @@ namespace Level14.BoardGameRules
         {
             RegisterMethod("Min");
             RegisterMethod("Win");
+            RegisterMethod("NextPlayer");
         }
     }
 }

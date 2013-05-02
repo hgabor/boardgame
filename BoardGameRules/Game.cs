@@ -15,6 +15,7 @@ namespace Level14.BoardGameRules
         public int PlayerCount { get { return players.Count; } }
         private int currentPlayer;
         public Player CurrentPlayer { get { return players[currentPlayer]; } }
+        internal Player OverrideNextPlayer { get; set; }
 
         public Coords Size { get { return board.Size; } }
 
@@ -108,7 +109,7 @@ namespace Level14.BoardGameRules
                 for (int i = 0; i < playerCount; i++) players.Add(new Player(i+1));
 
                 var size = (Coords)t.GetChild("SETTINGS").GetChild("BoardDimensions").GetOnlyChild().ParseExpr().Eval(globalContext);
-                board = new Board(size);
+                board = new Board(size, this);
 
                 for (int i = 0; i < t.GetChild("SETTINGS").GetChild("PieceTypes").ChildCount; i++)
                 {
@@ -122,6 +123,13 @@ namespace Level14.BoardGameRules
                         var ch = t.GetChild("STARTINGBOARD").GetChild(i);
                         switch (ch.Text)
                         {
+                            case "Invalid":
+                                board.Valid = Board.RuleType.Invalid;
+                                for (int j = 0; j < ch.ChildCount; j++)
+                                {
+                                    board.AddRule(ch.GetChild(j).ParseExpr());
+                                }
+                                break;
                             case "STARTINGPIECES":
                                 int ownerInt = (int)ch.GetChild("PLAYERREF").GetOnlyChild().ParseExpr().Eval(globalContext);
                                 Player owner = GetPlayer(ownerInt);
@@ -189,7 +197,13 @@ namespace Level14.BoardGameRules
                     var moveOptionsNode = moveOpNode.GetChild("MOVE_OPTIONS");
                     bool emptyTarget = moveOptionsNode.HasChild("Empty");
 
-                    var rule = new MoveRule(piece, moveFrom, moveTo, emptyTarget);
+                    Statement stmt = null;
+                    if (moveOpNode.HasChild("STATEMENTS"))
+                    {
+                        stmt = moveOpNode.GetChild("STATEMENTS").ParseStmtList();
+                    }
+
+                    var rule = new MoveRule(piece, moveFrom, moveTo, emptyTarget, stmt);
                     moveRules.Add(rule);
                 }
 
@@ -265,7 +279,7 @@ namespace Level14.BoardGameRules
 
 
                 // Move is valid
-                // TODO: Here we should execute post-move actions.
+                rule.RunAction(ctx);
 
                 // Perform the move
                 if (!CurrentPlayer.RemoveOffBoard(piece))
@@ -291,8 +305,8 @@ namespace Level14.BoardGameRules
 
         internal bool MoveIsValidGlobal(Coords from, Coords to, Context ctx)
         {
-            if (from != null && !board.IsInsideBoard(from)) return false;
-            if (to != null && !board.IsInsideBoard(to)) return false;
+            if (from != null && !board.IsValidPlace(from)) return false;
+            if (to != null && !board.IsValidPlace(to)) return false;
             if (from == null && to == null) return false;
 
             if (from != null)
@@ -361,7 +375,7 @@ namespace Level14.BoardGameRules
                 if (!MoveIsValidForRule(rule, null, from, to, ctx)) continue;
 
                 // Move is valid
-                // TODO: Here we should execute post-move actions.
+                rule.RunAction(ctx);
 
                 // Perform the move
                 piece = board[from];
@@ -406,6 +420,18 @@ namespace Level14.BoardGameRules
                     return;
                 }
             } while (CurrentPlayer.Lost);
+
+            if (OverrideNextPlayer != null)
+            {
+                currentPlayer = OverrideNextPlayer.ID - 1;
+                OverrideNextPlayer = null;
+            }
+
+            // If current player cannot move...
+            if (EnumeratePossibleMoves().Count() == 0)
+            {
+                CurrentPlayer.CannotMove(globalContext);
+            }
         }
 
         public delegate Coords PlaceAction(string title, Player player, IEnumerable<Coords> coords);
@@ -419,22 +445,11 @@ namespace Level14.BoardGameRules
             return placing(title, player, coords);
         }
 
-        public struct MoveDef {
-            public string PieceType;
-            public Coords From;
-            public Coords To;
 
-            public override string ToString()
-            {
-                string from = From == null ? "Offboard" : From.ToString();
-                string to = From == null ? "Offboard" : To.ToString();
-                return string.Format("{0}: {1} -> {2}", PieceType, from, to);
-            }
-        }
 
-        public IEnumerable<MoveDef> EnumeratePossibleMoves()
+        public IEnumerable<MoveDefinition> EnumeratePossibleMoves()
         {
-            HashSet<MoveDef> moves = new HashSet<MoveDef>();
+            HashSet<MoveDefinition> moves = new HashSet<MoveDefinition>();
 
             foreach (var p in CurrentPlayer.GetOffboard())
             {
@@ -444,9 +459,11 @@ namespace Level14.BoardGameRules
                     {
                         if (rule.From != null) continue;
                         Context ctx = new Context(globalContext);
+                        ctx.SetVariable("x", c[0]);
+                        ctx.SetVariable("y", c[1]);
                         if (MoveIsValidGlobal(null, c, ctx) && MoveIsValidForRule(rule, p, null, c, ctx))
                         {
-                            moves.Add(new MoveDef { PieceType = p.Type, From = null, To = c });
+                            moves.Add(new MoveDefinition { PieceType = p.Type, From = null, To = c });
                         }
                     }
                 }
@@ -459,14 +476,26 @@ namespace Level14.BoardGameRules
                     {
                         if (rule.OffboardRule) continue;
                         Context ctx = new Context(globalContext);
+                        ctx.SetVariable("x", from[0]);
+                        ctx.SetVariable("y", from[1]);
                         if (MoveIsValidGlobal(from, to, ctx) && MoveIsValidForRule(rule, null, from, to, ctx))
                         {
-                            moves.Add(new MoveDef { PieceType = board[from].Type, From = from, To = to });
+                            moves.Add(new MoveDefinition { PieceType = board[from].Type, From = from, To = to });
                         }
                     }
                 }
             }
             return moves;
+        }
+
+        public IEnumerable<MoveDefinition> EnumerateMovesFromCoord(Coords c)
+        {
+            return EnumeratePossibleMoves().Where(md => md.From != null && Coords.Match(c, md.From));
+        }
+
+        public IEnumerable<MoveDefinition> EnumerateMovesFromOffboard(Piece p)
+        {
+            return EnumeratePossibleMoves().Where(md => md.From == null && md.PieceType == p.Type);
         }
 
         static Game()

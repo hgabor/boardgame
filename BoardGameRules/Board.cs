@@ -10,17 +10,20 @@ namespace Level14.BoardGameRules
         Dictionary<Coords, Piece> board = new Dictionary<Coords, Piece>();
         public Coords Size { get; private set; }
         private Coords lowerLeft;
+        private Game game;
 
-        public Board(Coords size)
+        public Board(Coords size, Game game)
         {
             this.Size = size;
             lowerLeft = new Coords(Array.ConvertAll(size.ToInt32Array(), i => 1));
+            this.game = game;
+            this.Valid = RuleType.Invalid;
         }
 
         public bool TryPut(Coords c, Piece p)
         {
             if (c.PlaceHolder) throw new ArgumentOutOfRangeException("Non-placeholder coords needed.");
-            if (!IsInsideBoard(c))
+            if (!IsValidPlace(c))
             {
                 throw new ArgumentOutOfRangeException("Coords must be inside the board.");
             }
@@ -31,7 +34,7 @@ namespace Level14.BoardGameRules
         public bool TryRemove(Coords c)
         {
             if (c.PlaceHolder) throw new ArgumentOutOfRangeException("Non-placeholder coords needed.");
-            if (!IsInsideBoard(c))
+            if (!IsValidPlace(c))
             {
                 throw new ArgumentOutOfRangeException("Coords must be inside the board.");
             }
@@ -39,16 +42,53 @@ namespace Level14.BoardGameRules
             board.Remove(c);
             return true;
         }
-        public bool IsInsideBoard(Coords c)
+
+        public enum RuleType { Valid, Invalid }
+        public RuleType Valid { get; set; }
+
+        private List<Expression> ruleList = new List<Expression>();
+
+        public void AddRule(Expression exp)
+        {
+            ruleList.Add(exp);
+        }
+
+        private bool IsValidByRules(Coords c)
+        {
+            Context ctx = new Context(game);
+            ctx.SetVariable("x", c[0]);
+            ctx.SetVariable("y", c[1]);
+            if (Valid == RuleType.Valid)
+            {
+                // We must match at least one rule
+                foreach (var exp in ruleList)
+                {
+                    bool b = (bool)exp.Eval(ctx);
+                    if (b) return true;
+                }
+                return false;
+            }
+            else
+            {
+                // We mustn't match any rule
+                foreach (var exp in ruleList)
+                {
+                    bool b = (bool)exp.Eval(ctx);
+                    if (b) return false;
+                }
+                return true;
+            }
+        }
+
+        public bool IsValidPlace(Coords c)
         {
             if (c.PlaceHolder) throw new ArgumentOutOfRangeException("Non-placeholder coords needed.");
-            // TODO: check for "special" coordinates
 
             for (int i = 0; i < c.Dimension; i++)
             {
                 if (c[i] < 1 || c[i] > Size[i]) return false;
             }
-            return true;
+            return IsValidByRules(c);
         }
 
         public Piece this[Coords c]
@@ -75,7 +115,12 @@ namespace Level14.BoardGameRules
         {
             if (dimension == Size.Dimension)
             {
-                outList.Add(new Coords(coords));
+                Coords c = new Coords(coords);
+                if (IsValidByRules(c))
+                {
+                    outList.Add(c);
+                }
+                return;
             }
             for (int i = 1; i <= Size[dimension]; i++)
             {
