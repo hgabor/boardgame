@@ -132,6 +132,16 @@ namespace Level14.BoardGameGUI
                 gamePanel.InvalidateVisual();
                 offBoard.InvalidateVisual();
             };
+
+            App.Current.DispatcherUnhandledException += (sender, args) =>
+            {
+                InvalidGameException ex = args.Exception as InvalidGameException;
+                if (ex != null)
+                {
+                    System.Windows.MessageBox.Show(ex.Message, "Invalid game", MessageBoxButton.OK, MessageBoxImage.Error);
+                    args.Handled = true;
+                }
+            };
         }
 
         string rulebook;
