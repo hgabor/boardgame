@@ -29,7 +29,7 @@ namespace Level14.BoardGameRules
             {
                 foreach (var p in players)
                 {
-                    if (p.Won || p.Tied) return true;
+                    if (p.Won || p.Tied || p.Lost) return true;
                 }
                 return false;
             }
@@ -130,6 +130,13 @@ namespace Level14.BoardGameRules
                                     board.AddRule(ch.GetChild(j).ParseExpr());
                                 }
                                 break;
+                            case "Valid":
+                                board.Valid = Board.RuleType.Valid;
+                                for (int j = 0; j < ch.ChildCount; j++)
+                                {
+                                    board.AddRule(ch.GetChild(j).ParseExpr());
+                                }
+                                break;
                             case "STARTINGPIECES":
                                 int ownerInt = (int)ch.GetChild("PLAYERREF").GetOnlyChild().ParseExpr().Eval(globalContext);
                                 Player owner = GetPlayer(ownerInt);
@@ -197,13 +204,19 @@ namespace Level14.BoardGameRules
                     var moveOptionsNode = moveOpNode.GetChild("MOVE_OPTIONS");
                     bool emptyTarget = moveOptionsNode.HasChild("Empty");
 
+                    Expression condition = null;
+                    if (moveOpNode.HasChild("IF"))
+                    {
+                        condition = moveOpNode.GetChild("IF").GetOnlyChild().ParseExpr();
+                    }
+
                     Statement stmt = null;
                     if (moveOpNode.HasChild("STATEMENTS"))
                     {
                         stmt = moveOpNode.GetChild("STATEMENTS").ParseStmtList();
                     }
 
-                    var rule = new MoveRule(piece, moveFrom, moveTo, emptyTarget, stmt);
+                    var rule = new MoveRule(piece, moveFrom, moveTo, emptyTarget, condition, stmt);
                     moveRules.Add(rule);
                 }
 
@@ -337,6 +350,12 @@ namespace Level14.BoardGameRules
             // Target should be empty
             if (rule.TargetMustBeEmpty && oppPiece != null) return false;
 
+            if (rule.Condition != null)
+            {
+                bool cond = (bool)rule.Condition.Eval(ctx);
+                if (!cond) return false;
+            }
+
             if (rule.From == null)
             {
                 if (!CurrentPlayer.GetOffboard().Contains(piece)) return false;
@@ -409,15 +428,7 @@ namespace Level14.BoardGameRules
                 currentPlayer = (currentPlayer + 1) % PlayerCount;
                 if (currentPlayer == startPlayer)
                 {
-                    if (CurrentPlayer.Lost)
-                    {
-                        CurrentPlayer.Tied = true;
-                    }
-                    else
-                    {
-                        CurrentPlayer.Won = true;
-                    }
-                    return;
+                    break;
                 }
             } while (CurrentPlayer.Lost);
 

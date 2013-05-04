@@ -53,6 +53,7 @@ OP_LTE: '<=';
 OP_MOD: '%';
 OP_MUL: '*';
 OP_NE: '!=';
+OP_NOT: 'Not';
 OP_OR: 'Or';
 OP_SUB: '-';
 
@@ -86,8 +87,6 @@ intRef: int | ref;
 
 functionCall: name '(' expr? (',' expr)* ')' -> ^(FUNCCALL name ^(LIST expr*) );
 
-namelist_comma: NAME (',' NAME) -> NAME+;
-
 
 // Expressions:
 
@@ -98,14 +97,17 @@ selectExpr: '[' 'Select' name 'From' ref ( 'Where' expr )? ']' -> ^(SELECT name 
 setLiteral: '[' (expr (',' expr)* ','?)? ']' -> ^(LIT_SET expr+);
 setExpr: selectExpr | setLiteral;
 
-expr: andExpr (OP_OR andExpr)*;
-andExpr: relExpr (OP_AND^ relExpr)*;
-relExpr: addExpr ((OP_EQ|OP_NE|OP_GT|OP_LT|OP_GTE|OP_LTE)^ addExpr)*;
+expr: andExpr (OP_OR^ andExpr)*;
+andExpr: eqExpr (OP_AND^ eqExpr)*;
+eqExpr: relExpr ((OP_EQ|OP_NE)^ relExpr)*;
+relExpr: addExpr ((OP_GT|OP_LT|OP_GTE|OP_LTE)^ addExpr)*;
 addExpr: mulExpr ((OP_ADD|OP_SUB)^ mulExpr)*;
-mulExpr: signExpr ((OP_MUL|OP_DIV|OP_MOD)^ signExpr)*;
-signExpr:
+mulExpr: unaryExpr ((OP_MUL|OP_DIV|OP_MOD)^ unaryExpr)*;
+unaryExpr:
 	OP_SUB primeExpr -> ^(OP_SUB primeExpr) |
-	OP_ADD? primeExpr -> primeExpr;
+	OP_ADD? primeExpr -> primeExpr |
+	OP_NOT primeExpr -> ^(OP_NOT primeExpr);
+
 
 primeExpr: int | coord | ref | setExpr | '(' expr ')' -> expr;
 placeholderExpr: '_' | expr;
@@ -120,7 +122,7 @@ settingsRow:
 	(
 	  NAME ':' int -> ^(NAME int)
 	| NAME ':' coord -> ^(NAME coord)
-	| NAME ':' namelist_comma -> ^(NAME namelist_comma)
+	| NAME ':' NAME (',' NAME)* -> ^(NAME NAME+)
 	) ';'
 	;
 
@@ -140,6 +142,7 @@ startingBoardRow:
 
 invalidBoardRow:
 	(
+		'Valid' '(' (expr ';')+ ')' -> ^('Valid' expr+ ) |
 		'Invalid' '(' (expr ';')+ ')' -> ^('Invalid' expr+ )
 	);
 
@@ -147,13 +150,15 @@ startingBoard: 'StartingBoard' '(' invalidBoardRow? startingBoardRow+ ')' -> ^(S
 
 coordOffboard: coord | OFFBOARD;
 
+moveIf: 'If' expr -> ^(IF expr);
+
 moveThen:
 	'Then' statement+ 'End' -> ^(STATEMENTS statement+);
 
 moveOp:
-	from=coordOffboard '->' 'Empty'? to=coordOffboard moveThen?
+	from=coordOffboard '->' 'Empty'? to=coordOffboard moveIf? moveThen?
 	->
-	^( OP_MOVE ^(MOVE_FROM $from) ^(MOVE_TO $to) ^(MOVE_OPTIONS 'Empty'?) moveThen? );
+	^( OP_MOVE ^(MOVE_FROM $from) ^(MOVE_TO $to) ^(MOVE_OPTIONS 'Empty'?) moveIf? moveThen? );
 
 moveRow:
 	NAME ':' moveOp ';' -> ^(NAME moveOp);

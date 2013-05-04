@@ -1,0 +1,57 @@
+# http://en.wikipedia.org/wiki/Peg_solitaire
+
+Settings (
+    PlayerCount: 1;
+    PieceTypes: piece;
+    BoardDimensions: {9, 9};
+)
+
+StartingBoard (
+    Valid (
+        (x >= 4 And x <= 6) Or
+        (y >= 4 And y <= 6);
+    )
+    Player(1) (
+        piece: {1, 4}; piece: {1, 5}; piece: {1, 6};
+        piece: {2, 4}; piece: {2, 5}; piece: {2, 6};
+        piece: {3, 4}; piece: {3, 5}; piece: {3, 6};
+        piece: {4, 1}; piece: {4, 2}; piece: {4, 3};
+        piece: {4, 4}; piece: {4, 5}; piece: {4, 6};
+        piece: {4, 7}; piece: {4, 8}; piece: {4, 9};
+        piece: {5, 1}; piece: {5, 2}; piece: {5, 3};
+        piece: {5, 4};                piece: {5, 6};
+        piece: {5, 7}; piece: {5, 8}; piece: {5, 9};
+        piece: {6, 1}; piece: {6, 2}; piece: {6, 3};
+        piece: {6, 4}; piece: {6, 5}; piece: {6, 6};
+        piece: {6, 7}; piece: {6, 8}; piece: {6, 9};
+        piece: {7, 4}; piece: {7, 5}; piece: {7, 6};
+        piece: {8, 4}; piece: {8, 5}; piece: {8, 6};
+        piece: {9, 4}; piece: {9, 5}; piece: {9, 6};
+    )
+)
+
+Moves (
+    piece: {_, _} -> Empty {x+2, y} If Not IsEmpty({x+1, y}) Then
+        RemovePiece({x+1, y});
+    End;
+    piece: {_, _} -> Empty {x-2, y} If Not IsEmpty({x-1, y}) Then
+        RemovePiece({x-1, y});
+    End;
+    piece: {_, _} -> Empty {x, y+2} If Not IsEmpty({x, y+1}) Then
+        RemovePiece({x, y+1});
+    End;
+    piece: {_, _} -> Empty {x, y-2} If Not IsEmpty({x, y-1}) Then
+        RemovePiece({x, y-1});
+    End;
+)
+
+Events (
+    Player(1).FinishedMove (
+        If Count(Pieces) = 1 Then
+            Win(Player(1));
+        End
+    )
+    Player(1).CannotMove (
+        Lose(Player(1));
+    )
+)

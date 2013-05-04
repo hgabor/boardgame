@@ -14,6 +14,8 @@ namespace Level14.BoardGameRules
 
         internal bool TargetMustBeEmpty { get; private set; }
 
+        internal Expression Condition { get; private set; }
+
         private Statement action;
         internal void RunAction(Context ctx)
         {
@@ -25,12 +27,13 @@ namespace Level14.BoardGameRules
 
         internal bool OffboardRule { get { return From == null || To == null; } }
 
-        public MoveRule(string piece, CoordExpr from, CoordExpr to, bool targetEmpty, Statement action)
+        public MoveRule(string piece, CoordExpr from, CoordExpr to, bool targetEmpty, Expression condition, Statement action)
         {
             PieceType = piece;
             From = from;
             To = to;
             TargetMustBeEmpty = targetEmpty;
+            Condition = condition;
             this.action = action;
         }
 
