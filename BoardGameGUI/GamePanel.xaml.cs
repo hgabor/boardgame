@@ -87,7 +87,7 @@ namespace Level14.BoardGameGUI
                     }
                     else
                     {
-                        Brush b = ((i + j) % 2) == 0 ? Brushes.Beige : Brushes.Brown;
+                        Brush b = ((i + j) % 2) == 0 ? Brushes.DarkSeaGreen : Brushes.Brown;
                         dc.DrawRectangle(b, null, new Rect(i * 30, myj * 30, 30, 30));
                     }
                 }
