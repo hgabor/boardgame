@@ -168,17 +168,31 @@ namespace Level14.BoardGameGUI
 
             if (game.GameOver)
             {
-                if (game.Winners.Count() == 0)
+                if (game.PlayerCount == 1)
                 {
-                    System.Windows.MessageBox.Show("Game over!\nThe game ended in a tie!");
-                }
-                else if (game.Winners.Count() == 1)
-                {
-                    System.Windows.MessageBox.Show("Game over!\nThe winner is: " + game.Winners.First().ToString());
+                    if (game.Winners.Count() == 1)
+                    {
+                        System.Windows.MessageBox.Show("You won!");
+                    }
+                    else
+                    {
+                        System.Windows.MessageBox.Show("You lost!");
+                    }
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show("Game over!\nThe winners are: " + string.Join(", ", game.Winners));
+                    if (game.Winners.Count() == 0)
+                    {
+                        System.Windows.MessageBox.Show("Game over!\nThe game ended in a tie!");
+                    }
+                    else if (game.Winners.Count() == 1)
+                    {
+                        System.Windows.MessageBox.Show("Game over!\nThe winner is: " + game.Winners.First().ToString());
+                    }
+                    else
+                    {
+                        System.Windows.MessageBox.Show("Game over!\nThe winners are: " + string.Join(", ", game.Winners));
+                    }
                 }
                 NewGame();
             }
