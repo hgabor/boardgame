@@ -9,11 +9,6 @@ namespace Level14.BoardGameRules
     {
         private static class M
         {
-            public static Coords ChoosePlace(Context ctx, string title, IEnumerable<object> set) {
-                var coordSet = set.Select(o => (Coords)o);
-                return Game.ChoosePlace(title, ctx.Game.CurrentPlayer, coordSet);
-            }
-
             public static int Count(Context ctx, IEnumerable<object> set)
             {
                 return set.Count();
@@ -29,7 +24,8 @@ namespace Level14.BoardGameRules
                 p.Lost = true;
             }
 
-            public static object Min(Context ctx, IEnumerable<object> set) {
+            public static object Min(Context ctx, IEnumerable<object> set)
+            {
                 return set.Min();
             }
 
@@ -43,25 +39,31 @@ namespace Level14.BoardGameRules
                 ctx.Game.board.TryRemove(c);
             }
 
-            public static void Win(Context ctx, Player p) {
+            public static void Win(Context ctx, Player p)
+            {
                 p.Won = true;
             }
         }
 
-        void RegisterMethod(string name)
+        private void RegisterMethod(params string[] names)
         {
-            this.globalContext.SetVariable(name, new Function(typeof(M).GetMethod(name)));
+            foreach (var name in names)
+            {
+                this.globalContext.SetVariable(name, new Function(typeof(M).GetMethod(name)));
+            }
         }
 
         partial void InitGlobals()
         {
-            RegisterMethod("Count");
-            RegisterMethod("IsEmpty");
-            RegisterMethod("Lose");
-            RegisterMethod("Min");
-            RegisterMethod("NextPlayer");
-            RegisterMethod("RemovePiece");
-            RegisterMethod("Win");
+            RegisterMethod(
+                "Count",
+                "IsEmpty",
+                "Lose",
+                "Min",
+                "NextPlayer",
+                "RemovePiece",
+                "Win"
+                );
         }
     }
 }

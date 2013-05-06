@@ -445,19 +445,6 @@ namespace Level14.BoardGameRules
             }
         }
 
-        public delegate Coords PlaceAction(string title, Player player, IEnumerable<Coords> coords);
-        static PlaceAction placing;
-        public static void SetPlacing(PlaceAction value)
-        {
-            placing = value;
-        }
-        internal static Coords ChoosePlace(string title, Player player, IEnumerable<Coords> coords) {
-            if (placing == null) throw new InvalidOperationException("You must specify a Placing function to play this game!");
-            return placing(title, player, coords);
-        }
-
-
-
         public IEnumerable<MoveDefinition> EnumeratePossibleMoves()
         {
             HashSet<MoveDefinition> moves = new HashSet<MoveDefinition>();
