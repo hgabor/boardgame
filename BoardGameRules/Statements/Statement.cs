@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Antlr.Runtime.Tree;
+using Level14.BoardGameRules.Statements;
 
 namespace Level14.BoardGameRules
 {
@@ -23,6 +24,13 @@ namespace Level14.BoardGameRules
                 ITree actionTree = tree.GetChild("IF_ACTION");
                 Statement action = actionTree.ParseStmtList();
                 return new IfStatement(cond, action);
+            }
+            else if (tree.Text == "ASSIGNMENT")
+            {
+                Expression variable = tree.GetChild(0).ParseExpr();
+                Expression value = tree.GetChild(1).ParseExpr();
+                Statement assignment = new AssignmentStatement(variable, value);
+                return assignment;
             }
             else
             {

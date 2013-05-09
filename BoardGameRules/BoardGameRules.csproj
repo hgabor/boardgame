@@ -60,6 +60,9 @@
     <Content Include="Games\wolfanddogs.game">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Games\mills.game">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">
@@ -89,6 +92,7 @@
     </Antlr3>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Closure.cs" />
     <Compile Include="Expresssions\AddExpr.cs" />
     <Compile Include="Board.cs" />
     <Compile Include="BoardGameParser_public.cs" />
@@ -106,7 +110,9 @@
     <Compile Include="Expresssions\EqExpr.cs" />
     <Compile Include="Expresssions\Expression.cs" />
     <Compile Include="Coords.cs" />
+    <Compile Include="Expresssions\VarRefExpr.cs" />
     <Compile Include="MoveDefinition.cs" />
+    <Compile Include="Statements\AssignmentStatement.cs" />
     <Compile Include="Statements\ExprStatement.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Function.cs" />

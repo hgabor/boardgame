@@ -1,0 +1,90 @@
+# http://en.wikipedia.org/wiki/Nine_Men's_Morris
+
+Settings (
+    PlayerCount: 2;
+    PieceTypes: piece;
+    BoardDimensions: {3, 3, 3};
+    RulesOfPlayer2: SameAsPlayer1; # MirrorOfPlayer1 (chess), RotateOfPlayer1 (checkers)
+)
+
+Functions (
+    InMill(c) (
+        If (c = Offboard) Then Return False; End
+        x := c(1);
+        y := c(2);
+        z := c(3);
+        player := PieceAt(c).Owner;
+        Return (PieceAt({1, y, z}).Owner = player And
+                PieceAt({2, y, z}).Owner = player And
+                PieceAt({3, y, z}).Owner = player) Or
+               (PieceAt({x, 1, z}).Owner = player And
+                PieceAt({x, 2, z}).Owner = player And
+                PieceAt({x, 3, z}).Owner = player) Or
+               (x = 2 And
+                PieceAt({2, y, 1}).Owner = player And
+                PieceAt({2, y, 2}).Owner = player And
+                PieceAt({2, y, 3}).Owner = player) Or
+               (y = 2 And
+                PieceAt({x, 2, 1}).Owner = player And
+                PieceAt({x, 2, 2}).Owner = player And
+                PieceAt({x, 2, 3}).Owner = player);
+    )
+)
+
+Init (
+    phase := 1;
+)
+
+StartingBoard (
+    Invalid (
+        x = 2 And y = 2;
+    )
+    Player(1) (
+        piece: Offboard; piece: Offboard; piece: Offboard;
+        piece: Offboard; piece: Offboard; piece: Offboard;
+        piece: Offboard; piece: Offboard; piece: Offboard;
+    )
+)
+
+Moves (
+    piece: Offboard -> Empty {_, _, _} If phase = 1;
+    piece: {_, _, _} -> Empty {x+1, y, z} If phase = 2;
+    piece: {_, _, _} -> Empty {x-1, y, z} If phase = 2;
+    piece: {_, _, _} -> Empty {x, y+1, z} If phase = 2;
+    piece: {_, _, _} -> Empty {x, y-1, z} If phase = 2;
+    piece: {2, _, _} -> Empty {2, y, z+1} If phase = 2;
+    piece: {2, _, _} -> Empty {2, y, z-1} If phase = 2;
+    piece: {_, 2, _} -> Empty {x, 2, z+1} If phase = 2;
+    piece: {_, 2, _} -> Empty {x, 2, z-1} If phase = 2;
+    
+    piece: {_, _, _} -> Empty {_, _, _} If Count([Select $ From Pieces Where Owner = Player(1)]) = 3;
+)
+
+
+Events (
+    Player(1).CannotMove (
+        Win(Player(2));
+    )
+    Player(1).FinishedMove (
+        If InMill(Target) Then
+            remove := ChoosePiece(Player(1), [Select $ From Pieces Where Owner = Player(2) And Not InMill(Position)]);
+            
+            # If all pieces were in mill...
+            If remove = None Then
+                remove := ChoosePiece(Player(1), [Select $ From Pieces Where Owner = Player(2)]);
+            End
+            
+            RemovePiece(remove);
+            
+            If Count([Select $ From Pieces Where Owner = Player(2)]) = 2 Then
+                Win(Player(1));
+            End
+        End
+    )
+    
+    Only Player(2).FinishedMove(
+        If Count([Select $ From Pieces Where Owner = Player(2) And Position = Offboard]) = 0 Then
+            phase := 2;
+        End
+    )
+)

@@ -32,7 +32,7 @@ namespace Level14.BoardGameRules
         {
             Expression.RegisterParser("FUNCCALL", tree =>
             {
-                Expression name = tree.GetChild("REF").ParseExpr();
+                Expression name = tree.GetChild("FUNCNAME").GetOnlyChild().ParseExpr();
                 List<Expression> l = new List<Expression>();
                 for (int i = 0; i < tree.GetChild("LIST").ChildCount; i++)
                 {

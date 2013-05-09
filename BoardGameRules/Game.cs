@@ -116,6 +116,12 @@ namespace Level14.BoardGameRules
                     pieceTypes.Add(t.GetChild("SETTINGS").GetChild("PieceTypes").GetChild(i).Text);
                 }
 
+                if (t.HasChild("INIT"))
+                {
+                    var stmt = t.GetChild("INIT").GetChild("STATEMENTS").ParseStmtList();
+                    stmt.Run(globalContext);
+                }
+
                 if (t.HasChild("STARTINGBOARD"))
                 {
                     for (int i = 0; i < t.GetChild("STARTINGBOARD").ChildCount; i++)
