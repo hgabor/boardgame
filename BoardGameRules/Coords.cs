@@ -6,7 +6,7 @@ using Antlr.Runtime.Tree;
 
 namespace Level14.BoardGameRules
 {
-    public class Coords
+    public class Coords: ICallable
     {
         private int[] coords;
         private bool[] placeholder;
@@ -144,6 +144,15 @@ namespace Level14.BoardGameRules
                 hash = hash + b.GetHashCode();
             }
             return hash;
+        }
+
+        object ICallable.Call(Context ctx, params object[] args)
+        {
+            if (args.Length != 1) throw new ArgumentException("Coord needs exactly one param");
+            int? i = args[0] as int?;
+            if (i == null) throw new ArgumentException("Coord needs integer param");
+            if (i <= 0 || i > this.Dimension) throw new ArgumentOutOfRangeException(string.Format("Param must be between 1 and {0}", this.Dimension));
+            return this.coords[i.Value - 1];
         }
     }
 }

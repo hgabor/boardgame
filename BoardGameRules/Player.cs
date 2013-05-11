@@ -14,26 +14,30 @@ namespace Level14.BoardGameRules
             this.ID = id;
         }
 
-        Statement cannotMoveEvent;
-        internal void SetCannotMove(Statement stmt)
+        List<Statement> cannotMoveEvents = new List<Statement>();
+        internal void AddCannotMove(Statement stmt)
         {
-            if (this.cannotMoveEvent == null) this.cannotMoveEvent = stmt;
-            else throw new InvalidGameException("CannotMove event already set for " + this.ToString());
+            cannotMoveEvents.Add(stmt);
         }
         internal void CannotMove(Context c)
         {
-            cannotMoveEvent.Run(c);
+            foreach (var e in cannotMoveEvents)
+            {
+                e.Run(c);
+            }
         }
 
-        Statement postMoveEvent;
-        internal void SetPostMove(Statement stmt)
+        List<Statement> postMoveEvents = new List<Statement>();
+        internal void AddPostMove(Statement stmt)
         {
-            if (this.postMoveEvent == null) this.postMoveEvent = stmt;
-            else throw new InvalidGameException("FinishedMove event already set for " + this.ToString());
+            postMoveEvents.Add(stmt);
         }
         internal void PostMove(Context c)
         {
-            postMoveEvent.Run(c);
+            foreach (var e in postMoveEvents)
+            {
+                e.Run(c);
+            }
         }
 
 

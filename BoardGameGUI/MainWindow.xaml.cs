@@ -13,6 +13,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using Level14.BoardGameRules;
+using System.Windows.Threading;
 
 namespace Level14.BoardGameGUI
 {
@@ -24,7 +25,8 @@ namespace Level14.BoardGameGUI
 
         enum SelectState {
             From,
-            To
+            To,
+            Special
         }
 
         SelectState selectState = SelectState.From;
@@ -38,13 +40,11 @@ namespace Level14.BoardGameGUI
             set
             {
                 fromOffboard = value;
-                offBoard.Highlighted = value;
-                if (value == null)
+                gamePanel.ClearHighlight();
+                offBoard.ClearHighlight();
+                if (value != null)
                 {
-                    gamePanel.ClearHighlight();
-                }
-                else
-                {
+                    offBoard.AddHighlight(value);
                     foreach (var md in game.EnumerateMovesFromOffboard(value))
                     {
                         gamePanel.AddHighlight(md.To);
@@ -61,13 +61,14 @@ namespace Level14.BoardGameGUI
             }
             set
             {
-                fromCoord = value;
-                if (value == null)
+                if (value == null || Coords.Match(value, new Coords(-1)))
                 {
+                    fromCoord = null;
                     gamePanel.ClearHighlight();
                 }
                 else
                 {
+                    fromCoord = value;
                     gamePanel.AddHighlight(value);
                     foreach (var md in game.EnumerateMovesFromCoord(value))
                     {
@@ -78,33 +79,42 @@ namespace Level14.BoardGameGUI
         }
         Coords toCoord;
 
+        IEnumerable<Piece> mustSelectFrom;
+
         public MainWindow()
         {
             InitializeComponent();
 
             offBoard.Selected += (sender, args) =>
             {
-                if (selectState == SelectState.From)
+                switch (selectState)
                 {
-                    FromOffboard = args.Piece;
-                    selectState = SelectState.To;
-                }
-                else
-                {
-                    if (FromOffboard == args.Piece)
-                    {
-                        // Unselect it
-                        FromOffboard = null;
-                        selectState = SelectState.From;
-                    }
-                    else if (FromOffboard != null)
-                    {
+                    case SelectState.From:
                         FromOffboard = args.Piece;
-                    }
-                    else
-                    {
-                        // Unsupported
-                    }
+                        selectState = SelectState.To;
+                        break;
+                    case SelectState.To:
+                        if (FromOffboard == args.Piece)
+                        {
+                            // Unselect it
+                            FromOffboard = null;
+                            selectState = SelectState.From;
+                        }
+                        else if (FromOffboard != null)
+                        {
+                            FromOffboard = args.Piece;
+                        }
+                        else
+                        {
+                            // Unsupported
+                        }
+                        break;
+                    case SelectState.Special:
+                        if (mustSelectFrom.Contains(args.Piece))
+                        {
+                            SetSelected(args.Piece);
+                        }
+                        break;
                 }
                 gamePanel.InvalidateVisual();
                 offBoard.InvalidateVisual();
@@ -112,22 +122,37 @@ namespace Level14.BoardGameGUI
 
             gamePanel.Selected += (sender, args) =>
             {
-                if (selectState == SelectState.From)
+                switch (selectState)
                 {
-                    FromCoord = args.Coords;
-                    selectState = SelectState.To;
-                }
-                else
-                {
-                    if (fromCoord != null && Coords.Match(fromCoord, args.Coords))
-                    {
-                        FromCoord = null;
-                        selectState = SelectState.From;
-                    }
-                    else {
-                        toCoord = args.Coords;
-                        MakeMove();
-                    }
+                    case SelectState.From:
+                        FromCoord = args.Coords;
+                        if (FromCoord != null)
+                        {
+                            selectState = SelectState.To;
+                        }
+                        break;
+                    case SelectState.To:
+                        if (fromCoord != null && Coords.Match(fromCoord, args.Coords))
+                        {
+                            FromCoord = null;
+                            selectState = SelectState.From;
+                        }
+                        else
+                        {
+                            toCoord = args.Coords;
+                            MakeMove();
+                        }
+                        break;
+                    case SelectState.Special:
+                        foreach (var kvp in game.GetPieces())
+                        {
+                            if (Coords.Match(kvp.Key, args.Coords) && mustSelectFrom.Contains(kvp.Value))
+                            {
+                                SetSelected(kvp.Value);
+                                return;
+                            }
+                        }
+                        break;
                 }
                 gamePanel.InvalidateVisual();
                 offBoard.InvalidateVisual();
@@ -144,6 +169,7 @@ namespace Level14.BoardGameGUI
             };
         }
 
+        string gamename;
         string rulebook;
         Game game;
 
@@ -203,11 +229,83 @@ namespace Level14.BoardGameGUI
             currentPlayerLabel.Content = game.CurrentPlayer.ToString();
         }
 
+        private void SetCoordTransformation(Game game)
+        {
+            if (game.Size.Dimension == 3)
+            {
+                // Suppose mills
+                gamePanel.ICT = new CoordTransformer(
+                    new Coords[] {
+                        new Coords(1,1,1), new Coords(2,1,1), new Coords(3,1,1),
+                        new Coords(1,2,1),                    new Coords(3,2,1),
+                        new Coords(1,3,1), new Coords(2,3,1), new Coords(3,3,1),
+                        new Coords(1,1,2), new Coords(2,1,2), new Coords(3,1,2),
+                        new Coords(1,2,2),                    new Coords(3,2,2),
+                        new Coords(1,3,2), new Coords(2,3,2), new Coords(3,3,2),
+                        new Coords(1,1,3), new Coords(2,1,3), new Coords(3,1,3),
+                        new Coords(1,2,3),                    new Coords(3,2,3),
+                        new Coords(1,3,3), new Coords(2,3,3), new Coords(3,3,3),
+                    },
+                    new Coords[] {
+                        new Coords(3,3), new Coords(5,3), new Coords(7,3),
+                        new Coords(3,5),                  new Coords(7,5),
+                        new Coords(3,7), new Coords(5,7), new Coords(7,7),
+                        new Coords(2,2), new Coords(5,2), new Coords(8,2),
+                        new Coords(2,5),                  new Coords(8,5),
+                        new Coords(2,8), new Coords(5,8), new Coords(8,8),
+                        new Coords(1,1), new Coords(5,1), new Coords(9,1),
+                        new Coords(1,5),                  new Coords(9,5),
+                        new Coords(1,9), new Coords(5,9), new Coords(9,9),
+                    }
+                    );
+            }
+            else
+            {
+                gamePanel.ICT = new IdentityTransformer();
+            }
+        }
+
+        DispatcherFrame selectionFrame;
+        Piece selectedPiece;
+        private void SetSelected(Piece p)
+        {
+            selectedPiece = p;
+            selectionFrame.Continue = false;
+        }
+        private Piece SelectPiece(IEnumerable<Piece> pieces)
+        {
+            selectState = SelectState.Special;
+            this.mustSelectFrom = pieces;
+
+            offBoard.ClearHighlight();
+            gamePanel.ClearHighlight();
+            foreach (var p in mustSelectFrom)
+            {
+                offBoard.AddHighlight(p);
+                gamePanel.AddHighlight(p);
+            }
+            offBoard.InvalidateVisual();
+            gamePanel.InvalidateVisual();
+
+            selectionFrame = new DispatcherFrame();
+            Dispatcher.PushFrame(selectionFrame);
+            selectionFrame = null;
+
+            selectState = SelectState.From;
+            this.mustSelectFrom = null;
+
+            return selectedPiece;
+        }
+
         private void NewGame()
         {
             if (rulebook == null) return;
             this.game = new Game(rulebook);
-            var cache = new ImageCache(game);
+            game.SetSelectPieceFunction(SelectPiece);
+
+            var cache = new ImageCache(game, gamename);
+            SetCoordTransformation(game);
+
             gamePanel.Game = game;
             gamePanel.ImageCache = cache;
 
@@ -239,6 +337,7 @@ namespace Level14.BoardGameGUI
             {
                 string fileName = dlg.FileName;
                 this.rulebook = System.IO.File.ReadAllText(fileName);
+                this.gamename = System.IO.Path.GetFileNameWithoutExtension(dlg.FileName);
                 NewGame();
             }
         }

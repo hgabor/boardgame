@@ -33,12 +33,24 @@ namespace Level14.BoardGameRules
 
         internal void SetVariable(string name, object value)
         {
-            vars[name] = value;
+            if (parent != null && parent.GetVariable(name) != null)
+            {
+                parent.SetVariable(name, value);
+            }
+            else
+            {
+                vars[name] = value;
+            }
         }
 
         internal Player GetPlayer(int i)
         {
             return Game.GetPlayer(i);
+        }
+
+        internal static Context NewLocal(BoardGameRules.Game game)
+        {
+            return new Context(game.GetGlobalContext());
         }
     }
 }

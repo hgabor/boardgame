@@ -199,9 +199,9 @@ moveRow:
 
 moves: 'Moves' '(' moveRow+ ')' -> ^(MOVES moveRow+);
 
-eventType: 'Only'? playerRef '.' NAME -> ^(EVENTTYPE playerRef NAME ONLY_MODIFIER);
+eventType: playerRef '.' NAME -> ^(EVENTTYPE playerRef NAME);
 
-event: eventType ( ',' eventType )* '(' statement+ ')' -> ^(EVENT ^(EVENTTYPES eventType+)  ^(STATEMENTS statement+) );
+event: 'Only'? eventType ( ',' eventType )* '(' statement+ ')' -> ^(EVENT ^(EVENTTYPES eventType+)  ^(STATEMENTS statement+) 'Only'?);
 
 events: 'Events' '(' event+ ')' -> ^(EVENTS event+);
 

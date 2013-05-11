@@ -45,6 +45,7 @@ namespace Level14.BoardGameRules
         }
 
         private Context globalContext;
+        internal Context GetGlobalContext() { return globalContext; }
 
         class GlobalContext : Context
         {
@@ -54,8 +55,21 @@ namespace Level14.BoardGameRules
             {
                 switch (name)
                 {
+                    case "CurrentPlayer":
+                        return Game.CurrentPlayer;
+                    case "False":
+                        return false;
+                    case "None":
+                        return null;
                     case "Pieces":
-                        return Game.board.GetPiecesWithoutCoords();
+                        var pieces = Game.board.GetPiecesWithoutCoords();
+                        foreach (var p in Game.players)
+                        {
+                            pieces = pieces.Union(p.GetOffboard());
+                        }
+                        return pieces;
+                    case "True":
+                        return true;
                     default:
                         return base.GetVariable(name);
                 }
@@ -114,6 +128,42 @@ namespace Level14.BoardGameRules
                 for (int i = 0; i < t.GetChild("SETTINGS").GetChild("PieceTypes").ChildCount; i++)
                 {
                     pieceTypes.Add(t.GetChild("SETTINGS").GetChild("PieceTypes").GetChild(i).Text);
+                }
+
+                bool mirrorEvents = false;
+                bool mirrorMoves = false;
+
+                if (t.GetChild("SETTINGS").HasChild("RulesOfPlayer2"))
+                {
+                    string value = t.GetChild("SETTINGS").GetChild("RulesOfPlayer2").GetOnlyChild().Text;
+                    switch (value)
+                    {
+                        case "SameAsPlayer1":
+                            mirrorEvents = true;
+                            mirrorMoves = true;
+                            break;
+                        default:
+                            throw new InvalidGameException(string.Format("Unsupported rule transformation: {0}", value));
+                    }
+                }
+
+                if (t.HasChild("FUNCDEFLIST"))
+                {
+                    var functions = t.GetChild("FUNCDEFLIST");
+                    for (int i = 0; i < functions.ChildCount; i++)
+                    {
+                        var funcNode = functions.GetChild(i);
+                        System.Diagnostics.Debug.Assert(funcNode.Text == "FUNCDEF");
+                        string name = funcNode.GetChild("REF").GetOnlyChild().Text;
+                        var paramList = new List<string>();
+                        for (int j = 0; j < funcNode.GetChild("PARAMLIST").ChildCount; j++)
+                        {
+                            paramList.Add(funcNode.GetChild("PARAMLIST").GetChild(j).Text);
+                        }
+                        var body = funcNode.GetChild("STATEMENTS").ParseStmtList();
+                        var func = new UserFunction(paramList.ToArray(), body);
+                        globalContext.SetVariable(name, func);
+                    }
                 }
 
                 if (t.HasChild("INIT"))
@@ -188,6 +238,12 @@ namespace Level14.BoardGameRules
                     }
                 }
 
+                ITree moveRoot = t.GetChild("MOVES");
+                if (mirrorMoves)
+                {
+                    RewriteTree(moveRoot, RewriteMirrorPlayer);
+                }
+
                 for (int i = 0; i < t.GetChild("MOVES").ChildCount; i++)
                 {
                     var moveNode = t.GetChild("MOVES").GetChild(i);
@@ -226,6 +282,11 @@ namespace Level14.BoardGameRules
                     moveRules.Add(rule);
                 }
 
+                if (mirrorEvents)
+                {
+                    RewriteTree(t.GetChild("EVENTS"), RewriteMirrorPlayer);
+                }
+
                 for (int i = 0; i < t.GetChild("EVENTS").ChildCount; i++)
                 {
                     var eventNode = t.GetChild("EVENTS").GetChild(i);
@@ -240,10 +301,10 @@ namespace Level14.BoardGameRules
                         switch (eventType)
                         {
                             case "CannotMove":
-                                p.SetCannotMove(stmt);
+                                p.AddCannotMove(stmt);
                                 break;
                             case "FinishedMove":
-                                p.SetPostMove(stmt);
+                                p.AddPostMove(stmt);
                                 break;
                             default:
                                 throw new InvalidGameException("Invalid event: " + eventType);
@@ -279,6 +340,7 @@ namespace Level14.BoardGameRules
         public bool TryMakeMoveFromOffboard(Piece piece, Coords to)
         {
             Context ctx = new Context(this.globalContext);
+            ctx.SetVariable("To", to);
 
             // piece cannot be null
             if (piece == null) return false;
@@ -384,8 +446,9 @@ namespace Level14.BoardGameRules
 
             Context ctx = new Context(this.globalContext);
             // Special vars x, y are from coordinates
-            ctx.SetVariable("x", from[0]);
-            ctx.SetVariable("y", from[1]);
+            SetXYZ(ctx, from);
+            ctx.SetVariable("From", from);
+            ctx.SetVariable("To", to);
 
             if (!MoveIsValidGlobal(from, to, ctx)) return false;
 
@@ -463,8 +526,7 @@ namespace Level14.BoardGameRules
                     {
                         if (rule.From != null) continue;
                         Context ctx = new Context(globalContext);
-                        ctx.SetVariable("x", c[0]);
-                        ctx.SetVariable("y", c[1]);
+                        SetXYZ(ctx, c);
                         if (MoveIsValidGlobal(null, c, ctx) && MoveIsValidForRule(rule, p, null, c, ctx))
                         {
                             moves.Add(new MoveDefinition { PieceType = p.Type, From = null, To = c });
@@ -480,8 +542,7 @@ namespace Level14.BoardGameRules
                     {
                         if (rule.OffboardRule) continue;
                         Context ctx = new Context(globalContext);
-                        ctx.SetVariable("x", from[0]);
-                        ctx.SetVariable("y", from[1]);
+                        SetXYZ(ctx, from);
                         if (MoveIsValidGlobal(from, to, ctx) && MoveIsValidForRule(rule, null, from, to, ctx))
                         {
                             moves.Add(new MoveDefinition { PieceType = board[from].Type, From = from, To = to });
@@ -505,6 +566,98 @@ namespace Level14.BoardGameRules
         static Game()
         {
             RegisterSubClasses();
+        }
+
+
+        delegate bool RewriteRule(ITree input, out ITree output);
+
+        ITree CreatePlayerNode(int player)
+        {
+            ITree intTree = new CommonTree(new CommonToken(BoardGameLexer.INT, player.ToString()));
+            ITree litInt = new CommonTree(new CommonToken(BoardGameLexer.LIT_INT, "LIT_INT"));
+            litInt.AddChild(intTree);
+            ITree playerNode = new CommonTree(new CommonToken(BoardGameLexer.PLAYERREF, "PLAYERREF"));
+            playerNode.AddChild(litInt);
+            return playerNode;
+        }
+
+        bool RewriteMirrorPlayer(ITree input, out ITree output)
+        {
+            if (input.Text == "PLAYERREF" && input.GetOnlyChild().Text == "LIT_INT")
+            {
+                int thisPlayer = (int)input.GetOnlyChild().ParseExpr().Eval(globalContext);
+                int otherPlayer = thisPlayer == 1 ? 2 : 1;
+                output = CreatePlayerNode(otherPlayer);
+                return true;
+            }
+            output = null;
+            return false;
+        }
+
+        bool RewriteNode(ITree root, out ITree output, RewriteRule rule)
+        {
+            ITree newRoot;
+            bool needsRewrite = rule(root, out newRoot);
+            if (newRoot == null)
+            {
+                newRoot = new CommonTree(new CommonToken(root.Type, root.Text));
+
+                for (int i = 0; i < root.ChildCount; i++)
+                {
+                    ITree newChild;
+                    bool branchNeedsRewrite = RewriteNode(root.GetChild(i), out newChild, rule);
+                    needsRewrite = needsRewrite || branchNeedsRewrite;
+                    newRoot.AddChild(newChild);
+                }
+            }
+            output = newRoot;
+            return needsRewrite;
+        }
+
+        void RewriteTree(ITree root, RewriteRule rule)
+        {
+            List<ITree> newNodes = new List<ITree>();
+            for (int i = 0; i < root.ChildCount; i++)
+            {
+                ITree oldNode = root.GetChild(i);
+                if (oldNode.HasChild("Only")) continue;
+                ITree newNode;
+                bool needed = RewriteNode(oldNode, out newNode, rule);
+                if (needed) newNodes.Add(newNode);
+            }
+            foreach (var n in newNodes)
+            {
+                root.AddChild(n);
+            }
+        }
+
+
+        internal static void SetXYZ(Context ctx, Coords c)
+        {
+            if (c.Dimension >= 1)
+            {
+                ctx.SetVariable("x", c[0]);
+            }
+            if (c.Dimension >= 2)
+            {
+                ctx.SetVariable("y", c[1]);
+            }
+            if (c.Dimension >= 3)
+            {
+                ctx.SetVariable("z", c[2]);
+            }
+        }
+
+        public delegate Piece SelectPieceFunction (IEnumerable<Piece> pieces);
+        private SelectPieceFunction selectPieceFunction;
+        public void SetSelectPieceFunction(SelectPieceFunction s)
+        {
+            this.selectPieceFunction = s;
+        }
+        internal Piece AskForPiece(IEnumerable<Piece> pieces)
+        {
+            if (selectPieceFunction == null) throw new InvalidGameException("SetSelectPieceFunction must be called to allow piece selection!");
+            return selectPieceFunction(pieces);
         }
     }
 }

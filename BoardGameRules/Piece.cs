@@ -19,17 +19,18 @@ namespace Level14.BoardGameRules
 
         internal override object GetVariable(string name)
         {
-            if (name == "x" || name == "y")
+            if (name == "x" || name == "y" || name == "z")
             {
-                foreach (var kvp in Game.GetPieces())
-                {
-                    if (this == kvp.Value)
-                    {
-                        if (name == "x") return kvp.Key[0];
-                        else return kvp.Key[1];
-                    }
-                }
-                return -1; // Piece is not on the board
+                Coords c = GetPosition();
+                if (c == null) return 0;
+                if (name == "x") return c[0];
+                else if (name == "y") return c[1];
+                else if (name == "z") return c[2];
+                else return -1; // WTF?
+            }
+            else if (name == "Position")
+            {
+                return GetPosition();
             }
             else if (name == "Owner")
             {
@@ -39,6 +40,18 @@ namespace Level14.BoardGameRules
             {
                 return base.GetVariable(name);
             }
+        }
+
+        public Coords GetPosition()
+        {
+            foreach (var kvp in Game.GetPieces())
+            {
+                if (this == kvp.Value)
+                {
+                    return kvp.Key;
+                }
+            }
+            return null; // Piece is not on the board
         }
 
         public override string ToString()

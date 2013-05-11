@@ -18,14 +18,15 @@ namespace Level14.BoardGameRules
 
         public override object Eval(Context c)
         {
-            Function f = (Function)name.Eval(c);
-            object[] args = new object[p.Length + 1];
-            args[0] = c;
+            var f = (ICallable)name.Eval(c);
+            if (f == null) throw new InvalidGameException("Invalid function: " + name);
+            object[] args = new object[p.Length];
+            //args[0] = c;
             for (int i = 0; i < p.Length; i++)
             {
-                args[i + 1] = p[i].Eval(c);
+                args[i] = p[i].Eval(c);
             }
-            return f.Call(args);
+            return f.Call(Context.NewLocal(c.Game), args);
         }
 
         static FunctionCallExpr()

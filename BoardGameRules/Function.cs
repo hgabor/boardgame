@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Level14.BoardGameRules
 {
-    class Function
+    class Function: ICallable
     {
         System.Reflection.MethodInfo method;
 
@@ -14,9 +14,12 @@ namespace Level14.BoardGameRules
             this.method = method;
         }
 
-        public object Call(params object[] p)
+        public object Call(Context ctx, params object[] p)
         {
-            return method.Invoke(null, p);
+            var l = new List<object>();
+            l.Add(ctx);
+            l.AddRange(p);
+            return method.Invoke(null, l.ToArray());
         }
     }
 }

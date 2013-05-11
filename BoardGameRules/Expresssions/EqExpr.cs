@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Level14.BoardGameRules
+namespace Level14.BoardGameRules.Expresssions
 {
     class EqExpr:Expression
     {
@@ -16,12 +16,14 @@ namespace Level14.BoardGameRules
 
         public override object Eval(Context c)
         {
-            return lhs.Eval(c).Equals(rhs.Eval(c));
+            // Handle null values
+            return object.Equals(lhs.Eval(c), rhs.Eval(c));
         }
 
         static EqExpr()
         {
             Expression.RegisterBinaryParser("=", (l, r) => new EqExpr(l, r));
+            Expression.RegisterBinaryParser("!=", (l, r) => new NotExpr(new EqExpr(l, r)));
         }
     }
 }

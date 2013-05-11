@@ -16,13 +16,15 @@ namespace Level14.BoardGameRules
             this.action = action;
         }
 
-        public override void Run(Context c)
+        public override ControlFlow Run(Context c)
         {
-            bool ifResult = (bool)condition.Eval(c);
+            object o = condition.Eval(c);
+            bool ifResult = (bool)o;
             if (ifResult)
             {
-                action.Run(c);
+                return action.Run(c);
             }
+            return ControlFlow.Next;
         }
     }
 }

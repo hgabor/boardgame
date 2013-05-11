@@ -24,19 +24,40 @@ namespace Level14.BoardGameRules
             Set newSet = new Set();
             foreach (var o in set)
             {
-                Context oContext = (Context)o;
-                if (where == null)
+                ReferenceExpr refExpr = varName as ReferenceExpr;
+                if (refExpr != null && refExpr.Name == "$")
                 {
-                    newSet.Add(varName.Eval(oContext));
+                    if (where == null)
+                    {
+                        newSet.Add(o);
+                    }
+                    else
+                    {
+                        Context oContext = (Context)o;
+                        bool result = (bool)where.Eval(new MultiParentContext(c.Game, oContext, c));
+                        if (result)
+                        {
+                            newSet.Add(o);
+                        }
+                    }
                 }
                 else
                 {
-                    bool result = (bool)where.Eval(new MultiParentContext(c.Game, oContext, c));
-                    if (result)
+                    Context oContext = (Context)o;
+                    if (where == null)
                     {
                         newSet.Add(varName.Eval(oContext));
                     }
+                    else
+                    {
+                        bool result = (bool)where.Eval(new MultiParentContext(c.Game, oContext, c));
+                        if (result)
+                        {
+                            newSet.Add(varName.Eval(oContext));
+                        }
+                    }
                 }
+
             }
             return newSet;
         }

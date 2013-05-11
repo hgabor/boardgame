@@ -9,7 +9,13 @@ namespace Level14.BoardGameRules
 {
     abstract class Statement
     {
-        public abstract void Run(Context c);
+        public enum ControlFlow
+        {
+            Next,
+            Return,
+        }
+
+        public abstract ControlFlow Run(Context c);
 
         public static Statement Parse(ITree tree)
         {
@@ -31,6 +37,11 @@ namespace Level14.BoardGameRules
                 Expression value = tree.GetChild(1).ParseExpr();
                 Statement assignment = new AssignmentStatement(variable, value);
                 return assignment;
+            }
+            else if (tree.Text == "Return")
+            {
+                Expression exp = tree.GetOnlyChild().ParseExpr();
+                return new ReturnStatement(exp);
             }
             else
             {

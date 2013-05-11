@@ -8,6 +8,8 @@ namespace Level14.BoardGameRules
     class ReferenceExpr: Expression
     {
         string name;
+        public string Name { get { return name; } }
+
         public ReferenceExpr(string name)
         {
             this.name = name;
@@ -15,8 +17,15 @@ namespace Level14.BoardGameRules
 
         public override object Eval(Context c)
         {
+            if (c == null)
+            {
+                // Tried to get member of a null object
+                // Return value is null to simplify coding
+                return null;
+            }
             object o = c.GetVariable(name);
-            if (o == null) throw new InvalidGameException(string.Format("Variable {0} does not exist!", name));
+            //Allow nulls
+            //if (o == null) throw new InvalidGameException(string.Format("Variable {0} does not exist!", name));
             return o;
         }
         

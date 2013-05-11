@@ -9,7 +9,7 @@ Settings (
 
 Functions (
     InMill(c) (
-        If (c = Offboard) Then Return False; End
+        If (c = None) Then Return False; End
         x := c(1);
         y := c(2);
         z := c(3);
@@ -44,6 +44,11 @@ StartingBoard (
         piece: Offboard; piece: Offboard; piece: Offboard;
         piece: Offboard; piece: Offboard; piece: Offboard;
     )
+    Player(2) (
+        piece: Offboard; piece: Offboard; piece: Offboard;
+        piece: Offboard; piece: Offboard; piece: Offboard;
+        piece: Offboard; piece: Offboard; piece: Offboard;
+    )
 )
 
 Moves (
@@ -57,17 +62,18 @@ Moves (
     piece: {_, 2, _} -> Empty {x, 2, z+1} If phase = 2;
     piece: {_, 2, _} -> Empty {x, 2, z-1} If phase = 2;
     
-    piece: {_, _, _} -> Empty {_, _, _} If Count([Select $ From Pieces Where Owner = Player(1)]) = 3;
+    piece: {_, _, _} -> Empty {_, _, _} If Count([Select $ From Pieces Where Owner = CurrentPlayer]) = 3;
 )
 
 
 Events (
     Player(1).CannotMove (
+		DebugPrint(Player(1));
         Win(Player(2));
     )
     Player(1).FinishedMove (
-        If InMill(Target) Then
-            remove := ChoosePiece(Player(1), [Select $ From Pieces Where Owner = Player(2) And Not InMill(Position)]);
+        If InMill(To) Then
+            remove := ChoosePiece(Player(1), [Select $ From Pieces Where Owner = Player(2) And Position != None And Not InMill(Position)]);
             
             # If all pieces were in mill...
             If remove = None Then
@@ -83,8 +89,10 @@ Events (
     )
     
     Only Player(2).FinishedMove(
-        If Count([Select $ From Pieces Where Owner = Player(2) And Position = Offboard]) = 0 Then
+		myset := [Select $ From Pieces Where Owner = Player(2) And Position = None];
+        If Count(myset) = 0 Then
             phase := 2;
         End
+		#DebugBreak();
     )
 )

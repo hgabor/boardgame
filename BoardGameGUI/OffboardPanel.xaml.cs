@@ -28,7 +28,17 @@ namespace Level14.BoardGameGUI
         public Game Game { private get; set; }
         public ImageCache ImageCache { private get; set; }
         List<Piece> pieces;
-        public Piece Highlighted { get; set; }
+        private HashSet<Piece> highlight = new HashSet<Piece>();
+
+        public void ClearHighlight()
+        {
+            highlight.Clear();
+        }
+
+        public void AddHighlight(Piece p)
+        {
+            highlight.Add(p);
+        }
 
         public class OffboardEventArgs : EventArgs
         {
@@ -61,7 +71,7 @@ namespace Level14.BoardGameGUI
                 string imgName = "piece" + p.Owner.ID.ToString();
                 var coords = new Rect(i * 30, 0, 30, 30);
 
-                if (p == Highlighted) dc.DrawRectangle(Brushes.LightBlue, null, coords);
+                if (highlight.Contains(p)) dc.DrawRectangle(Brushes.LightBlue, null, coords);
                 dc.DrawImage(ImageCache[imgName], coords);
             }
         }

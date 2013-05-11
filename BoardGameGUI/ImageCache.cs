@@ -25,6 +25,20 @@ namespace Level14.BoardGameGUI
             }
         }
 
+        public ImageCache(Game g, string gamename)
+            : this(g)
+        {
+            try
+            {
+                BitmapImage img = new BitmapImage(new Uri(System.IO.Directory.GetCurrentDirectory() + @"\Images\bg\" + gamename + ".png"));
+                pieces.Add("bg", img);
+            }
+            catch (System.IO.FileNotFoundException e)
+            {
+                // Don't worry about it, we'll draw a checkerboard instead
+            }
+        }
+
         public ImageSource this[string name]
         {
             get
@@ -32,5 +46,7 @@ namespace Level14.BoardGameGUI
                 return pieces[name];
             }
         }
+
+        public bool Contains(string name) { return pieces.ContainsKey(name); }
     }
 }

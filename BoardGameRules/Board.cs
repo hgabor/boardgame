@@ -56,8 +56,7 @@ namespace Level14.BoardGameRules
         private bool IsValidByRules(Coords c)
         {
             Context ctx = new Context(game);
-            ctx.SetVariable("x", c[0]);
-            ctx.SetVariable("y", c[1]);
+            Game.SetXYZ(ctx, c);
             if (Valid == RuleType.Valid)
             {
                 // We must match at least one rule

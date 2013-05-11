@@ -16,11 +16,12 @@ namespace Level14.BoardGameRules.Statements
             this.value = value;
         }
 
-        public override void Run(Context c)
+        public override ControlFlow Run(Context c)
         {
             Closure cl = (Closure)variable.Eval(c);
             object newValue = value.Eval(c);
             cl.SetVariable(newValue);
+            return ControlFlow.Next;
         }
     }
 }

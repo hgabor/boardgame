@@ -9,12 +9,14 @@ namespace Level14.BoardGameRules
     {
         List<Statement> stmt = new List<Statement>();
 
-        public override void Run(Context c)
+        public override ControlFlow Run(Context c)
         {
             foreach (var s in stmt)
             {
-                s.Run(c);
+                var flow = s.Run(c);
+                if (flow == ControlFlow.Return) return ControlFlow.Return;
             }
+            return ControlFlow.Next;
         }
 
         public void Add(Statement s)

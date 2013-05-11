@@ -111,6 +111,7 @@
     <Compile Include="Expresssions\Expression.cs" />
     <Compile Include="Coords.cs" />
     <Compile Include="Expresssions\VarRefExpr.cs" />
+    <Compile Include="ICallable.cs" />
     <Compile Include="MoveDefinition.cs" />
     <Compile Include="Statements\AssignmentStatement.cs" />
     <Compile Include="Statements\ExprStatement.cs" />
@@ -143,9 +144,11 @@
     <Compile Include="Expresssions\ReferenceExpr.cs" />
     <Compile Include="Expresssions\SelectExpr.cs" />
     <Compile Include="Set.cs" />
+    <Compile Include="Statements\ReturnStatement.cs" />
     <Compile Include="Statements\Statement.cs" />
     <Compile Include="Statements\StatementList.cs" />
     <Compile Include="Expresssions\SubExpr.cs" />
+    <Compile Include="UserFunction.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Antlr3.Runtime">

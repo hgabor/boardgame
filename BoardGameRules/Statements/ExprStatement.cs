@@ -14,9 +14,10 @@ namespace Level14.BoardGameRules
             this.e = e;
         }
 
-        public override void Run(Context c)
+        public override ControlFlow Run(Context c)
         {
             e.Eval(c);
+            return ControlFlow.Next;
         }
     }
 }
