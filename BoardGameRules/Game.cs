@@ -25,6 +25,14 @@ namespace Level14.BoardGameRules
         private List<Player> players = new List<Player>();
         private List<MoveRule> moveRules = new List<MoveRule>();
 
+        public IEnumerable<string> PieceTypes
+        {
+            get
+            {
+                return pieceTypes.AsReadOnly();
+            }
+        }
+
         public bool GameOver
         {
             get

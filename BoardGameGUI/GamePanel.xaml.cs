@@ -119,8 +119,7 @@ namespace Level14.BoardGameGUI
                 Coords c = ict.GameToBoard(kvp.Key);
                 Piece p = kvp.Value;
                 string player = p.Owner.ID.ToString();
-                //string type = p.Type();
-                string type = "piece";
+                string type = p.Type;
                 int x = (c[0]-1) * 30;
                 int y = (size[1]-c[1]) * 30;
 

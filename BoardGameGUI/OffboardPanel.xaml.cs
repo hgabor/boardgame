@@ -67,8 +67,7 @@ namespace Level14.BoardGameGUI
             for (int i = 0; i < pieces.Count; i++)
             {
                 Piece p = pieces[i];
-                //string imgName = p.Type + p.Owner.ID.ToString();
-                string imgName = "piece" + p.Owner.ID.ToString();
+                string imgName = p.Type + p.Owner.ID.ToString();
                 var coords = new Rect(i * 30, 0, 30, 30);
 
                 if (highlight.Contains(p)) dc.DrawRectangle(Brushes.LightBlue, null, coords);

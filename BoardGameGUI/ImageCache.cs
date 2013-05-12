@@ -12,7 +12,7 @@ namespace Level14.BoardGameGUI
     {
         Dictionary<string, ImageSource> pieces = new Dictionary<string, ImageSource>();
 
-        public ImageCache(Game g)
+        private ImageCache(Game g)
         {
             // Load default images
             pieces.Clear();
@@ -30,12 +30,33 @@ namespace Level14.BoardGameGUI
         {
             try
             {
-                BitmapImage img = new BitmapImage(new Uri(System.IO.Directory.GetCurrentDirectory() + @"\Images\bg\" + gamename + ".png"));
+                BitmapImage img = new BitmapImage(new Uri(System.IO.Directory.GetCurrentDirectory() + @"\Images\" + gamename + @"\bg.png"));
                 pieces.Add("bg", img);
             }
             catch (System.IO.FileNotFoundException e)
             {
                 // Don't worry about it, we'll draw a checkerboard instead
+            }
+
+            for (int i = 0; i < g.PlayerCount; i++)
+            {
+                int player = i + 1;
+                foreach (string type in g.PieceTypes)
+                {
+                    if (type == "piece") continue;
+                    string pieceName = type + player.ToString();
+                    string fallbackName = "piece" + player.ToString();
+                    try
+                    {
+                        BitmapImage img = new BitmapImage(new Uri(System.IO.Directory.GetCurrentDirectory() + @"\Images\" + gamename + @"\" + pieceName + ".png"));
+                        pieces.Add(pieceName, img);
+                    }
+                    catch (System.IO.FileNotFoundException e)
+                    {
+                        // We'll use a fallback image named "pieceX" where X is the player
+                        pieces.Add(pieceName, pieces[fallbackName]);
+                    }
+                }
             }
         }
 
