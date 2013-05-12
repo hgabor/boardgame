@@ -8,10 +8,18 @@ namespace Level14.BoardGameRules
 {
     class Board
     {
+        public delegate Coords CoordTransformation(Player askingPlayer, Coords c);
+
+        private Coords IdentityTransformation(Player p, Coords c)
+        {
+            return c;
+        }
+
         Dictionary<Coords, Piece> board = new Dictionary<Coords, Piece>();
         public Coords Size { get; private set; }
         private Coords lowerLeft;
         private Game game;
+        public CoordTransformation Transformation { get; set; }
 
         public Board(Coords size, Game game)
         {
@@ -19,11 +27,14 @@ namespace Level14.BoardGameRules
             lowerLeft = new Coords(Array.ConvertAll(size.ToInt32Array(), i => 1));
             this.game = game;
             this.Valid = RuleType.Invalid;
+            Transformation = IdentityTransformation;
         }
 
-        public bool TryPut(Coords c, Piece p)
+        public bool TryPut(Coords cIn, Piece p, Player asker)
         {
-            if (c.PlaceHolder) throw new ArgumentOutOfRangeException("Non-placeholder coords needed.");
+            Coords c = Transformation(asker, cIn);
+
+            if (c.IsPlaceHolder) throw new ArgumentOutOfRangeException("Non-placeholder coords needed.");
             if (!IsValidPlace(c))
             {
                 throw new ArgumentOutOfRangeException("Coords must be inside the board.");
@@ -32,9 +43,11 @@ namespace Level14.BoardGameRules
             board.Add(c, p);
             return true;
         }
-        public bool TryRemove(Coords c)
+        public bool TryRemove(Coords cIn, Player asker)
         {
-            if (c.PlaceHolder) throw new ArgumentOutOfRangeException("Non-placeholder coords needed.");
+            Coords c = Transformation(asker, cIn);
+
+            if (c.IsPlaceHolder) throw new ArgumentOutOfRangeException("Non-placeholder coords needed.");
             if (!IsValidPlace(c))
             {
                 throw new ArgumentOutOfRangeException("Coords must be inside the board.");
@@ -57,7 +70,7 @@ namespace Level14.BoardGameRules
         private bool IsValidByRules(Coords c)
         {
             Context ctx = new Context(game);
-            ctx.SetXYZ(c);
+            ctx.SetXYZ(c, null);
             if (Valid == RuleType.Valid)
             {
                 // We must match at least one rule
@@ -82,7 +95,7 @@ namespace Level14.BoardGameRules
 
         public bool IsValidPlace(Coords c)
         {
-            if (c.PlaceHolder) throw new ArgumentOutOfRangeException("Non-placeholder coords needed.");
+            if (c.IsPlaceHolder) throw new ArgumentOutOfRangeException("Non-placeholder coords needed.");
 
             for (int i = 0; i < c.Dimension; i++)
             {
@@ -91,19 +104,17 @@ namespace Level14.BoardGameRules
             return IsValidByRules(c);
         }
 
-        public Piece this[Coords c]
+        public Piece PieceAt(Coords c, Player asker)
         {
-            get
-            {
-                Piece p;
-                if (board.TryGetValue(c, out p)) return p;
-                return null;
-            }
+            Piece p;
+            if (board.TryGetValue(Transformation(asker, c), out p)) return p;
+            return null;
         }
 
-        public IEnumerable<KeyValuePair<Coords, Piece>> GetPieces()
+        public IEnumerable<KeyValuePair<Coords, Piece>> GetPieces(Player asker)
         {
-            return board.AsEnumerable();
+            var newDict = board.Select(kvp => new KeyValuePair<Coords, Piece>(Transformation(asker, kvp.Key), kvp.Value));
+            return newDict;
         }
 
         public IEnumerable<Piece> GetPiecesWithoutCoords()
@@ -111,14 +122,14 @@ namespace Level14.BoardGameRules
             return board.Values.AsEnumerable();
         }
 
-        private void PossibleCoordsToArray(int[] coords, int dimension, List<Coords> outList)
+        private void PossibleCoordsToArray(int[] coords, int dimension, Player asker, List<Coords> outList)
         {
             if (dimension == Size.Dimension)
             {
                 Coords c = new Coords(coords);
                 if (IsValidByRules(c))
                 {
-                    outList.Add(c);
+                    outList.Add(Transformation(asker, c));
                 }
                 return;
             }
@@ -126,14 +137,14 @@ namespace Level14.BoardGameRules
             {
                 var newCoords = new List<int>(coords);
                 newCoords.Add(i);
-                PossibleCoordsToArray(newCoords.ToArray(), dimension + 1, outList);
+                PossibleCoordsToArray(newCoords.ToArray(), dimension + 1, asker, outList);
             }
         }
 
-        public IEnumerable<Coords> EnumerateCoords()
+        public IEnumerable<Coords> EnumerateCoords(Player asker)
         {
             var coords = new List<Coords>();
-            PossibleCoordsToArray(new int[0], 0, coords);
+            PossibleCoordsToArray(new int[0], 0, asker, coords);
             return coords;
         }
     }

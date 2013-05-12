@@ -43,7 +43,7 @@ namespace Level14.BoardGameRules
 
             public static bool IsEmpty(Context ctx, Coords c)
             {
-                return ctx.Game.board[c] == null;
+                return ctx.Game.board.PieceAt(c, ctx.Game.CurrentPlayer) == null;
             }
 
             public static void Lose(Context ctx, Player p)
@@ -63,7 +63,7 @@ namespace Level14.BoardGameRules
 
             public static Piece PieceAt(Context ctx, Coords c)
             {
-                return ctx.Game.board[c];
+                return ctx.Game.board.PieceAt(c, ctx.Game.CurrentPlayer);
             }
 
             public static void RemovePiece(Context ctx, object toRemove)
@@ -71,13 +71,13 @@ namespace Level14.BoardGameRules
                 Coords c = toRemove as Coords;
                 if (c != null)
                 {
-                    ctx.Game.board.TryRemove(c);
+                    ctx.Game.board.TryRemove(c, ctx.Game.CurrentPlayer);
                     return;
                 }
                 Piece p = toRemove as Piece;
                 if (p != null)
                 {
-                    ctx.Game.board.TryRemove(p.GetPosition());
+                    ctx.Game.board.TryRemove(p.GetPosition(ctx.Game.CurrentPlayer), ctx.Game.CurrentPlayer);
                 }
             }
 
@@ -126,6 +126,9 @@ namespace Level14.BoardGameRules
                         return false;
                     case "None":
                         return null;
+                    case "OppositePlayer":
+                        if (Game.PlayerCount != 2) return null;
+                        return Game.GetPlayer(3 - Game.CurrentPlayer.ID);
                     case "Pieces":
                         var pieces = Game.board.GetPiecesWithoutCoords();
                         foreach (var p in Game.players)

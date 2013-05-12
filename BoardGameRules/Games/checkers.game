@@ -1,0 +1,71 @@
+﻿# http://en.wikipedia.org/wiki/English_draughts
+
+Settings (
+	PlayerCount: 2;
+	PieceTypes: piece, king;
+	BoardDimensions: {8, 8};
+	RulesOfPlayer2: RotationOfPlayer1;
+)
+
+# Functions()
+
+Init (
+	capturing := False;
+)
+
+StartingBoard (
+	Valid (
+		(x + y) % 2 = 0;
+	)
+	Player(1) (
+		piece: {1,1}; piece: {3,1}; piece: {5,1}; piece: {7,1};
+		piece: {2,2}; piece: {4,2}; piece: {6,2}; piece: {8,2};
+		piece: {1,3}; piece: {3,3}; piece: {5,3}; piece: {7,3};
+	)
+	Player(2) (
+		piece: {8,8}; piece: {6,8}; piece: {4,8}; piece: {2,8};
+		piece: {7,7}; piece: {5,7}; piece: {3,7}; piece: {1,7};
+		piece: {8,6}; piece: {6,6}; piece: {4,6}; piece: {2,6};
+	)
+)
+
+Moves (
+	# Normal moves
+	piece: {_, _} -> Empty {x+1, y+1} ;
+	piece: {_, _} -> Empty {x-1, y+1} ;
+	king: {_, _} -> Empty {x+1, y+1} ;
+	king: {_, _} -> Empty {x-1, y+1} ;
+	king: {_, _} -> Empty {x+1, y-1} ;
+	king: {_, _} -> Empty {x-1, y-1} ;
+
+	# Captures
+	piece: {_, _} -> Empty {x+2, y+2} If PieceAt({x+1,y+1}).Owner = OppositePlayer Then
+		RemovePiece({x+1,y+1});
+		capturing := True;
+	End;
+	piece: {_, _} -> Empty {x-2, y+2} If PieceAt({x-1,y+1}).Owner = OppositePlayer Then
+		RemovePiece({x-1,y+1});
+		capturing := True;
+	End;
+	king: {_, _} -> Empty {x+2, y+2} If PieceAt({x+1,y+1}).Owner = OppositePlayer Then
+		RemovePiece({x+1,y+1});
+		capturing := True;
+	End;
+	king: {_, _} -> Empty {x+2, y-2} If PieceAt({x-1,y-1}).Owner = OppositePlayer Then
+		RemovePiece({x+1,y-1});
+		capturing := True;
+	End;
+	king: {_, _} -> Empty {x-2, y+2} If PieceAt({x-1,y+1}).Owner = OppositePlayer Then
+		RemovePiece({x-1,y+1});
+		capturing := True;
+	End;
+	king: {_, _} -> Empty {x-2, y-2} If PieceAt({x-1,y-1}).Owner = OppositePlayer Then
+		RemovePiece({x-1,y-1});
+	End;
+)
+
+Events (
+	Player(1).CannotMove (
+		Win(Player(2));
+	)
+)

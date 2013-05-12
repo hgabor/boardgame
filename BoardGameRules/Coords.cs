@@ -12,7 +12,7 @@ namespace Level14.BoardGameRules
         private bool[] placeholder;
         public int Dimension { get { return coords.Length; } }
 
-        public bool PlaceHolder
+        public bool IsPlaceHolder
         {
             get
             {
@@ -21,6 +21,14 @@ namespace Level14.BoardGameRules
                     if (p) return true;
                 }
                 return false;
+            }
+        }
+
+        public bool[] PlaceHolders
+        {
+            get
+            {
+                return (bool[])placeholder.Clone();
             }
         }
 

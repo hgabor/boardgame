@@ -48,8 +48,9 @@ namespace Level14.BoardGameRules
             return Game.GetPlayer(i);
         }
 
-        internal void SetXYZ(Coords c)
+        internal void SetXYZ(Coords cIn, Player asker)
         {
+            var c = Game.Transform(cIn, asker);
             if (c.Dimension >= 1)
             {
                 SetVariable("x", c[0]);

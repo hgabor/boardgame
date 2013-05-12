@@ -21,7 +21,7 @@ namespace Level14.BoardGameRules
         {
             if (name == "x" || name == "y" || name == "z")
             {
-                Coords c = GetPosition();
+                Coords c = GetPosition(Game.CurrentPlayer);
                 if (c == null) return 0;
                 if (name == "x") return c[0];
                 else if (name == "y") return c[1];
@@ -30,7 +30,7 @@ namespace Level14.BoardGameRules
             }
             else if (name == "Position")
             {
-                return GetPosition();
+                return GetPosition(Game.CurrentPlayer);
             }
             else if (name == "Owner")
             {
@@ -42,9 +42,9 @@ namespace Level14.BoardGameRules
             }
         }
 
-        public Coords GetPosition()
+        public Coords GetPosition(Player asker)
         {
-            foreach (var kvp in Game.GetPieces())
+            foreach (var kvp in Game.GetPieces(asker))
             {
                 if (this == kvp.Value)
                 {
