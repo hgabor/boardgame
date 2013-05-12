@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Level14.BoardGameRules
+namespace Level14.BoardGameRules.Expressions
 {
-    class SubExpr: Expression
+    class AddExpr: Expression
     {
-                Expression lhs, rhs;
+        Expression lhs, rhs;
 
-        public SubExpr(Expression lhs, Expression rhs)
+        public AddExpr(Expression lhs, Expression rhs)
         {
             this.lhs = lhs;
             this.rhs = rhs;
@@ -19,24 +19,24 @@ namespace Level14.BoardGameRules
         {
             int i1 = (int)lhs.Eval(c);
             int i2 = (int)rhs.Eval(c);
-            return i1 - i2;
+            return i1 + i2;
         }
 
         // Register parser
-        static SubExpr()
+        static AddExpr()
         {
-            Expression.RegisterParser("-", tree =>
+            Expression.RegisterParser("+", tree =>
             {
-                if (tree.ChildCount != 2) throw new InvalidGameException("- operator must have exactly 2 children!");
+                if (tree.ChildCount != 2) throw new InvalidGameException("+ operator must have exactly 2 children!");
                 Expression lhs = Expression.Parse(tree.GetChild(0));
                 Expression rhs = Expression.Parse(tree.GetChild(1));
-                return new SubExpr(lhs, rhs);
+                return new AddExpr(lhs, rhs);
             });
         }
 
         public override string ToString()
         {
-            return string.Format("({0} - {1})", lhs, rhs);
+            return string.Format("({0} + {1})", lhs, rhs);
         }
     }
 }

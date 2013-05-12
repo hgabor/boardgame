@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Level14.BoardGameRules.Expressions;
 
 namespace Level14.BoardGameRules
 {
@@ -56,7 +57,7 @@ namespace Level14.BoardGameRules
         private bool IsValidByRules(Coords c)
         {
             Context ctx = new Context(game);
-            Game.SetXYZ(ctx, c);
+            ctx.SetXYZ(c);
             if (Valid == RuleType.Valid)
             {
                 // We must match at least one rule

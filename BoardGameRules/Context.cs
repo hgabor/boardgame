@@ -48,9 +48,26 @@ namespace Level14.BoardGameRules
             return Game.GetPlayer(i);
         }
 
+        internal void SetXYZ(Coords c)
+        {
+            if (c.Dimension >= 1)
+            {
+                SetVariable("x", c[0]);
+            }
+            if (c.Dimension >= 2)
+            {
+                SetVariable("y", c[1]);
+            }
+            if (c.Dimension >= 3)
+            {
+                SetVariable("z", c[2]);
+            }
+        }
+
         internal static Context NewLocal(BoardGameRules.Game game)
         {
             return new Context(game.GetGlobalContext());
         }
+
     }
 }

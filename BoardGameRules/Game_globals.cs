@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
+using Level14.BoardGameRules.Expressions;
+using System.Runtime.CompilerServices;
 
 namespace Level14.BoardGameRules
 {
@@ -88,7 +91,7 @@ namespace Level14.BoardGameRules
         {
             foreach (var name in names)
             {
-                this.globalContext.SetVariable(name, new Function(typeof(M).GetMethod(name)));
+                this.globalContext.SetVariable(name, new PredefinedFunction(typeof(M).GetMethod(name)));
             }
         }
 
@@ -107,6 +110,51 @@ namespace Level14.BoardGameRules
                 "RemovePiece",
                 "Win"
                 );
+        }
+
+        class GlobalContext : Context
+        {
+            internal GlobalContext(Game g) : base(g) { }
+
+            internal override object GetVariable(string name)
+            {
+                switch (name)
+                {
+                    case "CurrentPlayer":
+                        return Game.CurrentPlayer;
+                    case "False":
+                        return false;
+                    case "None":
+                        return null;
+                    case "Pieces":
+                        var pieces = Game.board.GetPiecesWithoutCoords();
+                        foreach (var p in Game.players)
+                        {
+                            pieces = pieces.Union(p.GetOffboard());
+                        }
+                        return pieces;
+                    case "True":
+                        return true;
+                    default:
+                        return base.GetVariable(name);
+                }
+            }
+        }
+
+        // Run ALL static constructors...
+        private static void RegisterSubClasses()
+        {
+            foreach (Type type in Assembly.GetExecutingAssembly().GetTypes())
+            {
+                if (typeof(Expression).IsAssignableFrom(type))
+                {
+                    RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+                }
+            }
+        }
+        static Game()
+        {
+            RegisterSubClasses();
         }
     }
 }

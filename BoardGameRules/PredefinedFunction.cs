@@ -5,11 +5,11 @@ using System.Text;
 
 namespace Level14.BoardGameRules
 {
-    class Function: ICallable
+    class PredefinedFunction: ICallable
     {
         System.Reflection.MethodInfo method;
 
-        public Function(System.Reflection.MethodInfo method)
+        public PredefinedFunction(System.Reflection.MethodInfo method)
         {
             this.method = method;
         }

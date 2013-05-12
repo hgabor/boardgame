@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Level14.BoardGameRules.Expresssions
+namespace Level14.BoardGameRules.Expressions
 {
-    class OrExpr: Expression
+    class AndExpr: Expression
     {
         private Expression lhs;
         private Expression rhs;
 
-        public OrExpr(Expression lhs, Expression rhs)
+        public AndExpr(Expression lhs, Expression rhs)
         {
             this.lhs = lhs;
             this.rhs = rhs;
@@ -20,16 +20,16 @@ namespace Level14.BoardGameRules.Expresssions
         {
             bool l = (bool)lhs.Eval(c);
             // Lazy evaluation
-            if (l == true) return true;
+            if (l == false) return false;
 
             return rhs.Eval(c);
         }
 
-        static OrExpr()
+        static AndExpr()
         {
-            Expression.RegisterBinaryParser("Or", (lhs, rhs) =>
+            Expression.RegisterBinaryParser("And", (lhs, rhs) =>
             {
-                return new OrExpr(lhs, rhs);
+                return new AndExpr(lhs, rhs);
             });
         }
 

@@ -11,8 +11,7 @@
     <RootNamespace>Level14.BoardGameRules</RootNamespace>
     <AssemblyName>BoardGameRules</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -93,31 +92,31 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Closure.cs" />
-    <Compile Include="Expresssions\AddExpr.cs" />
+    <Compile Include="Expressions\AddExpr.cs" />
     <Compile Include="Board.cs" />
     <Compile Include="BoardGameParser_public.cs" />
-    <Compile Include="Expresssions\AndExpr.cs" />
-    <Compile Include="Expresssions\LTExpr.cs" />
-    <Compile Include="Expresssions\LTEExpr.cs" />
-    <Compile Include="Expresssions\GTExpr.cs" />
-    <Compile Include="Expresssions\NotExpr.cs" />
-    <Compile Include="Expresssions\OrExpr.cs" />
-    <Compile Include="Expresssions\ModExpr.cs" />
-    <Compile Include="Expresssions\SetExpr.cs" />
-    <Compile Include="Expresssions\ConstIntExpr.cs" />
+    <Compile Include="Expressions\AndExpr.cs" />
+    <Compile Include="Expressions\LTExpr.cs" />
+    <Compile Include="Expressions\LTEExpr.cs" />
+    <Compile Include="Expressions\GTExpr.cs" />
+    <Compile Include="Expressions\NotExpr.cs" />
+    <Compile Include="Expressions\OrExpr.cs" />
+    <Compile Include="Expressions\ModExpr.cs" />
+    <Compile Include="Expressions\SetExpr.cs" />
+    <Compile Include="Expressions\ConstIntExpr.cs" />
     <Compile Include="Context.cs" />
-    <Compile Include="Expresssions\CoordExpr.cs" />
-    <Compile Include="Expresssions\EqExpr.cs" />
-    <Compile Include="Expresssions\Expression.cs" />
+    <Compile Include="Expressions\CoordExpr.cs" />
+    <Compile Include="Expressions\EqExpr.cs" />
+    <Compile Include="Expressions\Expression.cs" />
     <Compile Include="Coords.cs" />
-    <Compile Include="Expresssions\VarRefExpr.cs" />
+    <Compile Include="Expressions\VarRefExpr.cs" />
     <Compile Include="ICallable.cs" />
     <Compile Include="MoveDefinition.cs" />
     <Compile Include="Statements\AssignmentStatement.cs" />
     <Compile Include="Statements\ExprStatement.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="Function.cs" />
-    <Compile Include="Expresssions\FunctionCallExpr.cs" />
+    <Compile Include="TreeHelpers.cs" />
+    <Compile Include="PredefinedFunction.cs" />
+    <Compile Include="Expressions\FunctionCallExpr.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="BoardGameLexer.cs">
       <AutoGen>True</AutoGen>
@@ -130,24 +129,23 @@
       <DependentUpon>BoardGame.g</DependentUpon>
     </Compile>
     <Compile Include="Game_globals.cs" />
-    <Compile Include="Expresssions\GTEExpr.cs" />
+    <Compile Include="Expressions\GTEExpr.cs" />
     <Compile Include="Statements\IfStatement.cs" />
     <Compile Include="InvalidGameException.cs" />
-    <Compile Include="Expresssions\MemberAccessExpr.cs" />
+    <Compile Include="Expressions\MemberAccessExpr.cs" />
     <Compile Include="MoveRule.cs" />
     <Compile Include="MultiParentContext.cs" />
     <Compile Include="Piece.cs" />
-    <Compile Include="Expresssions\PlaceHolderExpr.cs" />
+    <Compile Include="Expressions\PlaceHolderExpr.cs" />
     <Compile Include="PlaceHolderValue.cs" />
     <Compile Include="Player.cs" />
-    <Compile Include="Expresssions\PlayerRefExpr.cs" />
-    <Compile Include="Expresssions\ReferenceExpr.cs" />
-    <Compile Include="Expresssions\SelectExpr.cs" />
-    <Compile Include="Set.cs" />
+    <Compile Include="Expressions\PlayerRefExpr.cs" />
+    <Compile Include="Expressions\ReferenceExpr.cs" />
+    <Compile Include="Expressions\SelectExpr.cs" />
     <Compile Include="Statements\ReturnStatement.cs" />
     <Compile Include="Statements\Statement.cs" />
     <Compile Include="Statements\StatementList.cs" />
-    <Compile Include="Expresssions\SubExpr.cs" />
+    <Compile Include="Expressions\SubExpr.cs" />
     <Compile Include="UserFunction.cs" />
   </ItemGroup>
   <ItemGroup>

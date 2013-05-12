@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using Antlr.Runtime.Tree;
 using Level14.BoardGameRules.Statements;
+using Level14.BoardGameRules.Expressions;
 
-namespace Level14.BoardGameRules
+namespace Level14.BoardGameRules.Statements
 {
     abstract class Statement
     {

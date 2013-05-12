@@ -7,6 +7,8 @@ using Antlr.Runtime;
 using Antlr.Runtime.Tree;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Level14.BoardGameRules.Expressions;
+using Level14.BoardGameRules.Statements;
 
 namespace Level14.BoardGameRules
 {
@@ -46,35 +48,6 @@ namespace Level14.BoardGameRules
 
         private Context globalContext;
         internal Context GetGlobalContext() { return globalContext; }
-
-        class GlobalContext : Context
-        {
-            internal GlobalContext(Game g) : base(g) { }
-
-            internal override object GetVariable(string name)
-            {
-                switch (name)
-                {
-                    case "CurrentPlayer":
-                        return Game.CurrentPlayer;
-                    case "False":
-                        return false;
-                    case "None":
-                        return null;
-                    case "Pieces":
-                        var pieces = Game.board.GetPiecesWithoutCoords();
-                        foreach (var p in Game.players)
-                        {
-                            pieces = pieces.Union(p.GetOffboard());
-                        }
-                        return pieces;
-                    case "True":
-                        return true;
-                    default:
-                        return base.GetVariable(name);
-                }
-            }
-        }
 
         internal Player GetPlayer(int i)
         {
@@ -241,7 +214,7 @@ namespace Level14.BoardGameRules
                 ITree moveRoot = t.GetChild("MOVES");
                 if (mirrorMoves)
                 {
-                    RewriteTree(moveRoot, RewriteMirrorPlayer);
+                    moveRoot.Rewrite(TreeHelpers.RewriteMirrorPlayer);
                 }
 
                 for (int i = 0; i < t.GetChild("MOVES").ChildCount; i++)
@@ -284,7 +257,7 @@ namespace Level14.BoardGameRules
 
                 if (mirrorEvents)
                 {
-                    RewriteTree(t.GetChild("EVENTS"), RewriteMirrorPlayer);
+                    t.GetChild("EVENTS").Rewrite(TreeHelpers.RewriteMirrorPlayer);
                 }
 
                 for (int i = 0; i < t.GetChild("EVENTS").ChildCount; i++)
@@ -322,18 +295,6 @@ namespace Level14.BoardGameRules
             catch (Exception e)
             {
                 throw new InvalidGameException(e);
-            }
-        }
-
-        // Run ALL static constructors...
-        private static void RegisterSubClasses()
-        {
-            foreach (Type type in Assembly.GetExecutingAssembly().GetTypes())
-            {
-                if (typeof(Expression).IsAssignableFrom(type))
-                {
-                    RuntimeHelpers.RunClassConstructor(type.TypeHandle);
-                }
             }
         }
 
@@ -446,7 +407,7 @@ namespace Level14.BoardGameRules
 
             Context ctx = new Context(this.globalContext);
             // Special vars x, y are from coordinates
-            SetXYZ(ctx, from);
+            ctx.SetXYZ(from);
             ctx.SetVariable("From", from);
             ctx.SetVariable("To", to);
 
@@ -526,7 +487,7 @@ namespace Level14.BoardGameRules
                     {
                         if (rule.From != null) continue;
                         Context ctx = new Context(globalContext);
-                        SetXYZ(ctx, c);
+                        ctx.SetXYZ(c);
                         if (MoveIsValidGlobal(null, c, ctx) && MoveIsValidForRule(rule, p, null, c, ctx))
                         {
                             moves.Add(new MoveDefinition { PieceType = p.Type, From = null, To = c });
@@ -542,7 +503,7 @@ namespace Level14.BoardGameRules
                     {
                         if (rule.OffboardRule) continue;
                         Context ctx = new Context(globalContext);
-                        SetXYZ(ctx, from);
+                        ctx.SetXYZ(from);
                         if (MoveIsValidGlobal(from, to, ctx) && MoveIsValidForRule(rule, null, from, to, ctx))
                         {
                             moves.Add(new MoveDefinition { PieceType = board[from].Type, From = from, To = to });
@@ -561,91 +522,6 @@ namespace Level14.BoardGameRules
         public IEnumerable<MoveDefinition> EnumerateMovesFromOffboard(Piece p)
         {
             return EnumeratePossibleMoves().Where(md => md.From == null && md.PieceType == p.Type);
-        }
-
-        static Game()
-        {
-            RegisterSubClasses();
-        }
-
-
-        delegate bool RewriteRule(ITree input, out ITree output);
-
-        ITree CreatePlayerNode(int player)
-        {
-            ITree intTree = new CommonTree(new CommonToken(BoardGameLexer.INT, player.ToString()));
-            ITree litInt = new CommonTree(new CommonToken(BoardGameLexer.LIT_INT, "LIT_INT"));
-            litInt.AddChild(intTree);
-            ITree playerNode = new CommonTree(new CommonToken(BoardGameLexer.PLAYERREF, "PLAYERREF"));
-            playerNode.AddChild(litInt);
-            return playerNode;
-        }
-
-        bool RewriteMirrorPlayer(ITree input, out ITree output)
-        {
-            if (input.Text == "PLAYERREF" && input.GetOnlyChild().Text == "LIT_INT")
-            {
-                int thisPlayer = (int)input.GetOnlyChild().ParseExpr().Eval(globalContext);
-                int otherPlayer = thisPlayer == 1 ? 2 : 1;
-                output = CreatePlayerNode(otherPlayer);
-                return true;
-            }
-            output = null;
-            return false;
-        }
-
-        bool RewriteNode(ITree root, out ITree output, RewriteRule rule)
-        {
-            ITree newRoot;
-            bool needsRewrite = rule(root, out newRoot);
-            if (newRoot == null)
-            {
-                newRoot = new CommonTree(new CommonToken(root.Type, root.Text));
-
-                for (int i = 0; i < root.ChildCount; i++)
-                {
-                    ITree newChild;
-                    bool branchNeedsRewrite = RewriteNode(root.GetChild(i), out newChild, rule);
-                    needsRewrite = needsRewrite || branchNeedsRewrite;
-                    newRoot.AddChild(newChild);
-                }
-            }
-            output = newRoot;
-            return needsRewrite;
-        }
-
-        void RewriteTree(ITree root, RewriteRule rule)
-        {
-            List<ITree> newNodes = new List<ITree>();
-            for (int i = 0; i < root.ChildCount; i++)
-            {
-                ITree oldNode = root.GetChild(i);
-                if (oldNode.HasChild("Only")) continue;
-                ITree newNode;
-                bool needed = RewriteNode(oldNode, out newNode, rule);
-                if (needed) newNodes.Add(newNode);
-            }
-            foreach (var n in newNodes)
-            {
-                root.AddChild(n);
-            }
-        }
-
-
-        internal static void SetXYZ(Context ctx, Coords c)
-        {
-            if (c.Dimension >= 1)
-            {
-                ctx.SetVariable("x", c[0]);
-            }
-            if (c.Dimension >= 2)
-            {
-                ctx.SetVariable("y", c[1]);
-            }
-            if (c.Dimension >= 3)
-            {
-                ctx.SetVariable("z", c[2]);
-            }
         }
 
         public delegate Piece SelectPieceFunction (IEnumerable<Piece> pieces);

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Antlr.Runtime.Tree;
 
-namespace Level14.BoardGameRules
+namespace Level14.BoardGameRules.Expressions
 {
     abstract class Expression
     {

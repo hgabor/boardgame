@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Level14.BoardGameRules
+namespace Level14.BoardGameRules.Expressions
 {
-    class LTExpr : Expression
+    class GTExpr : Expression
     {
         Expression lhs, rhs;
-        public LTExpr(Expression lhs, Expression rhs)
+        public GTExpr(Expression lhs, Expression rhs)
         {
             this.lhs = lhs;
             this.rhs = rhs;
@@ -18,12 +18,12 @@ namespace Level14.BoardGameRules
         {
             int l = (int)lhs.Eval(c);
             int r = (int)rhs.Eval(c);
-            return l < r;
+            return l > r;
         }
 
-        static LTExpr()
+        static GTExpr()
         {
-            Expression.RegisterBinaryParser("<", (l, r) => new LTExpr(l, r));
+            Expression.RegisterBinaryParser(">", (l, r) => new GTExpr(l, r));
         }
     }
 }

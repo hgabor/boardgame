@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Level14.BoardGameRules
+namespace Level14.BoardGameRules.Expressions
 {
     class SelectExpr: Expression
     {
@@ -21,7 +21,7 @@ namespace Level14.BoardGameRules
         public override object Eval(Context c)
         {
             IEnumerable<object> set = (IEnumerable<object>)from.Eval(c);
-            Set newSet = new Set();
+            var newSet = new HashSet<object>();
             foreach (var o in set)
             {
                 ReferenceExpr refExpr = varName as ReferenceExpr;
