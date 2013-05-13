@@ -93,10 +93,9 @@ Events (
 	)
 	Player(1).FinishedMove (
 		If captured Then
-			NextPlayer(CurrentPlayer);
+			NextPlayer(Player(1));
 			captured := False;
 		End
-		#DebugBreak();
 		If y = 8 Then
 			NextPlayer(OppositePlayer);
 			captured := False;

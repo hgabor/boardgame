@@ -25,5 +25,10 @@ namespace Level14.BoardGameRules.Expressions
         {
             Expression.RegisterBinaryParser(">=", (l, r) => new GTEExpr(l, r));
         }
+
+        public override string ToString()
+        {
+            return string.Format("({0} >= {1})", lhs, rhs);
+        }
     }
 }

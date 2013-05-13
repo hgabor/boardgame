@@ -76,5 +76,10 @@ namespace Level14.BoardGameRules.Expressions
                 return new SelectExpr(varName, from, where);
             });
         }
+
+        public override string ToString()
+        {
+            return "[Select ...]";
+        }
     }
 }

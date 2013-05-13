@@ -26,5 +26,10 @@ namespace Level14.BoardGameRules.Expressions
         {
             Expression.RegisterBinaryParser("MEMBER_ACCESS", (parent, member) => new MemberAccessExpr(parent, member));
         }
+
+        public override string ToString()
+        {
+            return string.Format("({0}.{1})", parent, member);
+        }
     }
 }

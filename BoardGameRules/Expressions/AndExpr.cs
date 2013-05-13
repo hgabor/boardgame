@@ -33,6 +33,9 @@ namespace Level14.BoardGameRules.Expressions
             });
         }
 
-
+        public override string ToString()
+        {
+            return string.Format("({0} And {1})", lhs, rhs);
+        }
     }
 }

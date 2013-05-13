@@ -5,11 +5,11 @@ using System.Text;
 
 namespace Level14.BoardGameRules.Expressions
 {
-    class ModExpr: Expression
+    class DivExpr: Expression
     {
         private Expression lhs;
         private Expression rhs;
-        public ModExpr(Expression lhs, Expression rhs)
+        public DivExpr(Expression lhs, Expression rhs)
         {
             this.lhs = lhs;
             this.rhs = rhs;
@@ -17,20 +17,20 @@ namespace Level14.BoardGameRules.Expressions
 
         public override object Eval(Context c)
         {
-            return (int)lhs.Eval(c) % (int)rhs.Eval(c);
+            return (int)lhs.Eval(c) / (int)rhs.Eval(c);
         }
 
-        static ModExpr()
+        static DivExpr()
         {
-            Expression.RegisterBinaryParser("%", (lhs, rhs) =>
+            Expression.RegisterBinaryParser("/", (lhs, rhs) =>
             {
-                return new ModExpr(lhs, rhs);
+                return new DivExpr(lhs, rhs);
             });
         }
 
         public override string ToString()
         {
-            return string.Format("({0} % {1})", lhs, rhs);
+            return string.Format("({0} / {1})", lhs, rhs);
         }
     }
 }

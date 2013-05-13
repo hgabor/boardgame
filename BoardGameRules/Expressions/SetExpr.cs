@@ -36,5 +36,10 @@ namespace Level14.BoardGameRules.Expressions
                 return new SetExpr(l);
             });
         }
+
+        public override string ToString()
+        {
+            return "[...]";
+        }
     }
 }

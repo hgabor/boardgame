@@ -42,5 +42,11 @@ namespace Level14.BoardGameRules.Expressions
                 return new FunctionCallExpr(name, l.ToArray());
             });
         }
+
+        public override string ToString()
+        {
+            string args = string.Join(", ", (object[])p);
+            return string.Format("{0}({1})", name, args);
+        }
     }
 }

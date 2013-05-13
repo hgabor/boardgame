@@ -99,6 +99,8 @@
     <Compile Include="Board.cs" />
     <Compile Include="BoardGameParser_public.cs" />
     <Compile Include="Expressions\AndExpr.cs" />
+    <Compile Include="Expressions\DivExpr.cs" />
+    <Compile Include="Expressions\MulExpr.cs" />
     <Compile Include="Expressions\LTExpr.cs" />
     <Compile Include="Expressions\LTEExpr.cs" />
     <Compile Include="Expressions\GTExpr.cs" />

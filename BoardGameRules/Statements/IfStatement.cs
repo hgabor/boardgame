@@ -27,5 +27,10 @@ namespace Level14.BoardGameRules.Statements
             }
             return ControlFlow.Next;
         }
+
+        public override string ToString()
+        {
+            return string.Format("If {0} Then\n{1}End\n", condition, action);
+        }
     }
 }

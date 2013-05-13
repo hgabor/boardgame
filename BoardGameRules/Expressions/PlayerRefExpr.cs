@@ -27,5 +27,10 @@ namespace Level14.BoardGameRules.Expressions
                 return new PlayerRefExpr(playerRef);
             });
         }
+
+        public override string ToString()
+        {
+            return string.Format("Player({0})", playerID);
+        }
     }
 }

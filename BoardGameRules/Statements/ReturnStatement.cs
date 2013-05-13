@@ -21,5 +21,10 @@ namespace Level14.BoardGameRules.Statements
             c.SetVariable("_Return", retval);
             return ControlFlow.Return;
         }
+
+        public override string ToString()
+        {
+            return string.Format("Return {0};\n", exp);
+        }
     }
 }

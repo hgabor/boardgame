@@ -20,5 +20,10 @@ namespace Level14.BoardGameRules.Statements
             e.Eval(c);
             return ControlFlow.Next;
         }
+
+        public override string ToString()
+        {
+            return e.ToString() + ";";
+        }
     }
 }

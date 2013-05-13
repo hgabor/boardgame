@@ -35,9 +35,9 @@ namespace Level14.BoardGameRules
                 case "label":
                     return Label;
                 case "from":
-                    return From;
+                    return Game.Transform(From, Game.CurrentPlayer);
                 case "to":
-                    return To;
+                    return Game.Transform(To, Game.CurrentPlayer);
                 default:
                     return base.GetVariable(name);
             }

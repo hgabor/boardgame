@@ -23,5 +23,9 @@ namespace Level14.BoardGameRules.Statements
         {
             stmt.Add(s);
         }
+        public override string ToString()
+        {
+            return string.Join("\n", stmt);
+        }
     }
 }

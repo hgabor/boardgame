@@ -24,5 +24,10 @@ namespace Level14.BoardGameRules.Statements
             cl.SetVariable(newValue);
             return ControlFlow.Next;
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0} := {1};\n", variable, value);
+        }
     }
 }

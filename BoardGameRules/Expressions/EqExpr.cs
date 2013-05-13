@@ -25,5 +25,9 @@ namespace Level14.BoardGameRules.Expressions
             Expression.RegisterBinaryParser("=", (l, r) => new EqExpr(l, r));
             Expression.RegisterBinaryParser("!=", (l, r) => new NotExpr(new EqExpr(l, r)));
         }
+        public override string ToString()
+        {
+            return string.Format("({0} = {1})", lhs, rhs);
+        }
     }
 }

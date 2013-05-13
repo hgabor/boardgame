@@ -27,5 +27,10 @@ namespace Level14.BoardGameRules.Expressions
                 return new NotExpr(tree.GetOnlyChild().ParseExpr());
             });
         }
+
+        public override string ToString()
+        {
+            return string.Format("(Not {0})", expr);
+        }
     }
 }
