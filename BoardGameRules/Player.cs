@@ -41,6 +41,18 @@ namespace Level14.BoardGameRules
             }
         }
 
+        List<Statement> preMoveEvents = new List<Statement>();
+        internal void AddPreMove(Statement stmt)
+        {
+            preMoveEvents.Add(stmt);
+        }
+        internal void PreMove(Context c)
+        {
+            foreach (var e in preMoveEvents)
+            {
+                e.Run(c);
+            }
+        }
 
         public override string ToString()
         {

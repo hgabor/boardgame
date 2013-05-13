@@ -23,6 +23,8 @@ namespace Level14.BoardGameRules
 
         private List<string> pieceTypes = new List<string>();
         private List<Player> players = new List<Player>();
+
+        private IEnumerable<MoveDefinition> allowedMoves;
         private List<MoveRule> moveRules = new List<MoveRule>();
 
         public IEnumerable<string> PieceTypes
@@ -113,7 +115,9 @@ namespace Level14.BoardGameRules
 
                 for (int i = 0; i < t.GetChild("SETTINGS").GetChild("PieceTypes").ChildCount; i++)
                 {
-                    pieceTypes.Add(t.GetChild("SETTINGS").GetChild("PieceTypes").GetChild(i).Text);
+                    string pt = t.GetChild("SETTINGS").GetChild("PieceTypes").GetChild(i).Text;
+                    pieceTypes.Add(pt);
+                    globalContext.SetVariable(pt, pt);
                 }
 
                 bool mirrorEvents = false;
@@ -267,6 +271,13 @@ namespace Level14.BoardGameRules
                     var moveOptionsNode = moveOpNode.GetChild("MOVE_OPTIONS");
                     bool emptyTarget = moveOptionsNode.HasChild("Empty");
 
+                    string label = null;
+                    if (moveOpNode.HasChild("Label"))
+                    {
+                        label = moveOpNode.GetChild("Label").GetOnlyChild().Text;
+                        globalContext.SetVariable(label, label);
+                    }
+
                     Expression condition = null;
                     if (moveOpNode.HasChild("IF"))
                     {
@@ -279,7 +290,7 @@ namespace Level14.BoardGameRules
                         stmt = moveOpNode.GetChild("STATEMENTS").ParseStmtList();
                     }
 
-                    var rule = new MoveRule(piece, moveFrom, moveTo, emptyTarget, condition, stmt);
+                    var rule = new MoveRule(piece, moveFrom, moveTo, emptyTarget, label, condition, stmt, this);
                     moveRules.Add(rule);
                 }
 
@@ -307,6 +318,9 @@ namespace Level14.BoardGameRules
                             case "FinishedMove":
                                 p.AddPostMove(stmt);
                                 break;
+                            case "BeforeMove":
+                                p.AddPreMove(stmt);
+                                break;
                             default:
                                 throw new InvalidGameException("Invalid event: " + eventType);
                         }
@@ -315,6 +329,7 @@ namespace Level14.BoardGameRules
                 }
 
                 currentPlayer = 0;
+                PreMoveActions();
             }
             catch (InvalidGameException)
             {
@@ -329,12 +344,17 @@ namespace Level14.BoardGameRules
         public bool TryMakeMoveFromOffboard(Piece piece, Coords to)
         {
             Context ctx = new Context(this.globalContext);
-            ctx.SetVariable("To", to);
+            ctx.SetVariable("to", Transform(to, CurrentPlayer));
 
             // piece cannot be null
             if (piece == null) return false;
             // Cannot move opponent's piece
             if (piece.Owner != CurrentPlayer) return false;
+
+            bool isInlist = EnumerateMovesFromOffboard(piece).Any(
+                md => md.From == null && Coords.Match(md.To, to) && md.PieceType == piece.Type);
+            if (!isInlist) return false;
+
 
             if (!MoveIsValidGlobal(null, to, ctx)) return false;
 
@@ -363,6 +383,7 @@ namespace Level14.BoardGameRules
                     throw new InvalidGameException("Cannot move to " + to.ToString() + ", piece " + oppPiece.ToString() + " is in the way!");
                 }
 
+                ctx.SetXYZ(to, CurrentPlayer);
                 CurrentPlayer.PostMove(ctx);
                 PostMoveActions();
 
@@ -443,13 +464,19 @@ namespace Level14.BoardGameRules
             Context ctx = new Context(this.globalContext);
             // Special vars x, y are from coordinates
             ctx.SetXYZ(from, CurrentPlayer);
-            ctx.SetVariable("From", from);
-            ctx.SetVariable("To", to);
+            ctx.SetVariable("from", Transform(from, CurrentPlayer));
+            ctx.SetVariable("to", Transform(to, CurrentPlayer));
+
 
             if (!MoveIsValidGlobal(from, to, ctx)) return false;
 
             Piece piece = board.PieceAt(from, null);
             Piece oppPiece = board.PieceAt(to, null);
+
+            bool isInlist = EnumerateMovesFromCoord(from).Any(
+                md => Coords.Match(md.From, from) && Coords.Match(md.To, to));
+            if (!isInlist) return false;
+
 
             foreach (var rule in moveRules)
             {
@@ -476,6 +503,7 @@ namespace Level14.BoardGameRules
                     throw new InvalidGameException("Cannot move to " + to.ToString() + ", piece " + oppPiece.ToString() + " is in the way!");
                 }
 
+                ctx.SetXYZ(to, CurrentPlayer);
                 CurrentPlayer.PostMove(ctx);
                 PostMoveActions();
 
@@ -484,6 +512,38 @@ namespace Level14.BoardGameRules
             }
             // No suitable rule found.
             return false;
+        }
+
+        private void PreMoveActions()
+        {
+            // If current player cannot move...
+            int counter = 0;
+            while (true)
+            {
+                counter++;
+                if (counter > 100)
+                {
+                    throw new InvalidGameException("Game went into a loop, where no one can move, lose or win.");
+                }
+                allowedMoves = null;
+                allowedMoves = EnumeratePossibleMoves();
+                CurrentPlayer.PreMove(Context.NewLocal(this));
+                if (allowedMoves.Count() == 0)
+                {
+                    CurrentPlayer.CannotMove(globalContext);
+                    // In most games if the player cannot move, he loses
+                    if (CurrentPlayer.Lost) return;
+                    else
+                    {
+                        // But not always, so we should try the next player
+                        currentPlayer = (currentPlayer + 1) % PlayerCount;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
         }
 
         private void PostMoveActions()
@@ -505,11 +565,7 @@ namespace Level14.BoardGameRules
                 OverrideNextPlayer = null;
             }
 
-            // If current player cannot move...
-            if (EnumeratePossibleMoves().Count() == 0)
-            {
-                CurrentPlayer.CannotMove(globalContext);
-            }
+            PreMoveActions();
         }
 
         public IEnumerable<MoveDefinition> EnumeratePossibleMoves()
@@ -528,7 +584,7 @@ namespace Level14.BoardGameRules
                         var cT = Transform(c, CurrentPlayer);
                         if (MoveIsValidGlobal(null, c, ctx) && MoveIsValidForRule(rule, p, null, cT, ctx))
                         {
-                            moves.Add(new MoveDefinition { PieceType = p.Type, From = null, To = c });
+                            moves.Add(new MoveDefinition(pieceType: p.Type, label: rule.Label, from: null, to: c, game: this));
                         }
                     }
                 }
@@ -546,22 +602,24 @@ namespace Level14.BoardGameRules
                         var toT = Transform(to, CurrentPlayer);
                         if (MoveIsValidGlobal(from, to, ctx) && MoveIsValidForRule(rule, null, fromT, toT, ctx))
                         {
-                            moves.Add(new MoveDefinition { PieceType = board.PieceAt(from, null).Type, From = from, To = to });
+                            moves.Add(new MoveDefinition(pieceType: board.PieceAt(from, null).Type, label: rule.Label, from: from, to: to, game: this));
                         }
                     }
                 }
             }
-            return moves;
+            return allowedMoves == null ? moves : moves.Intersect(allowedMoves);
         }
 
         public IEnumerable<MoveDefinition> EnumerateMovesFromCoord(Coords c)
         {
-            return EnumeratePossibleMoves().Where(md => md.From != null && Coords.Match(c, md.From));
+            var ret = EnumeratePossibleMoves().Where(md => md.From != null && Coords.Match(c, md.From));
+            return ret;
         }
 
         public IEnumerable<MoveDefinition> EnumerateMovesFromOffboard(Piece p)
         {
-            return EnumeratePossibleMoves().Where(md => md.From == null && md.PieceType == p.Type);
+            var ret = EnumeratePossibleMoves().Where(md => md.From == null && md.PieceType == p.Type);
+            return ret;
         }
 
         public delegate Piece SelectPieceFunction (IEnumerable<Piece> pieces);

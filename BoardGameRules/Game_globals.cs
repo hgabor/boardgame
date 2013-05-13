@@ -66,6 +66,12 @@ namespace Level14.BoardGameRules
                 return ctx.Game.board.PieceAt(c, ctx.Game.CurrentPlayer);
             }
 
+            public static void Place(Context ctx, string piecetype, Coords c)
+            {
+                Piece p = new Piece(piecetype, ctx.Game.CurrentPlayer, ctx.Game);
+                ctx.Game.board.TryPut(c, p, ctx.Game.CurrentPlayer);
+            }
+
             public static void RemovePiece(Context ctx, object toRemove)
             {
                 Coords c = toRemove as Coords;
@@ -107,6 +113,7 @@ namespace Level14.BoardGameRules
                 "Min",
                 "NextPlayer",
                 "PieceAt",
+                "Place",
                 "RemovePiece",
                 "Win"
                 );
@@ -120,6 +127,8 @@ namespace Level14.BoardGameRules
             {
                 switch (name)
                 {
+                    case "AllowedMoves":
+                        return Game.allowedMoves;
                     case "CurrentPlayer":
                         return Game.CurrentPlayer;
                     case "False":
@@ -141,6 +150,28 @@ namespace Level14.BoardGameRules
                     default:
                         return base.GetVariable(name);
                 }
+            }
+
+            internal override void SetVariable(string name, object value)
+            {
+                if (name == "AllowedMoves")
+                {
+                    var newValObj = value as IEnumerable<object>;
+                    if (newValObj == null) {
+                        throw new InvalidGameException("AllowedMoves must be a set of move rules!");
+                    }
+                    var newVal = newValObj.OfType<MoveDefinition>();
+                    Game.allowedMoves = newVal;
+                }
+                else
+                {
+                    base.SetVariable(name, value);
+                }
+            }
+
+            protected override bool HasVariable(string name)
+            {
+                return name == "AllowedMoves" || base.HasVariable(name);
             }
         }
 

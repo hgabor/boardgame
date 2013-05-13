@@ -103,7 +103,10 @@ intRef: int | ref;
 coord: '{' placeholderExpr (',' placeholderExpr )* '}' -> ^(LIT_COORDS placeholderExpr+);
 playerRef: 'Player' '(' expr ')' -> ^(PLAYERREF expr);
 
-selectExpr: '[' 'Select' name 'From' ref ( 'Where' expr )? ']' -> ^(SELECT name ^(SELECT_FROM ref) ^(SELECT_WHERE expr));
+selectExpr:
+	'[' 'Select' name 'From' ref ']' -> ^(SELECT name ^(SELECT_FROM ref)) |
+	'[' 'Select' name 'From' ref 'Where' expr ']' -> ^(SELECT name ^(SELECT_FROM ref) ^(SELECT_WHERE expr)) ;
+
 setLiteral: '[' (expr (',' expr)* ','?)? ']' -> ^(LIT_SET expr+);
 setExpr: selectExpr | setLiteral;
 
@@ -184,15 +187,17 @@ startingBoard: 'StartingBoard' '(' invalidBoardRow? startingBoardRow+ ')' -> ^(S
 
 coordOffboard: coord | OFFBOARD;
 
+moveLabel: 'Label' NAME -> ^('Label' NAME);
+
 moveIf: 'If' expr -> ^(IF expr);
 
 moveThen:
 	'Then' statement+ 'End' -> ^(STATEMENTS statement+);
 
 moveOp:
-	from=coordOffboard '->' 'Empty'? to=coordOffboard moveIf? moveThen?
+	from=coordOffboard '->' 'Empty'? to=coordOffboard moveLabel? moveIf? moveThen?
 	->
-	^( OP_MOVE ^(MOVE_FROM $from) ^(MOVE_TO $to) ^(MOVE_OPTIONS 'Empty'?) moveIf? moveThen? );
+	^( OP_MOVE ^(MOVE_FROM $from) ^(MOVE_TO $to) ^(MOVE_OPTIONS 'Empty'?) moveLabel? moveIf? moveThen? );
 
 moveRow:
 	NAME ':' moveOp ';' -> ^(NAME moveOp);

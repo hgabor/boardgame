@@ -72,7 +72,7 @@ Events (
         Win(Player(2));
     )
     Player(1).FinishedMove (
-        If InMill(To) Then
+        If InMill(to) Then
             remove := ChoosePiece(Player(1), [Select $ From Pieces Where Owner = Player(2) And Position != None And Not InMill(Position)]);
             
             # If all pieces were in mill...

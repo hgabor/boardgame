@@ -15,6 +15,7 @@ namespace Level14.BoardGameRules
         internal CoordExpr To { get; private set; }
 
         internal bool TargetMustBeEmpty { get; private set; }
+        internal string Label { get; private set; }
 
         internal Expression Condition { get; private set; }
 
@@ -29,12 +30,13 @@ namespace Level14.BoardGameRules
 
         internal bool OffboardRule { get { return From == null || To == null; } }
 
-        public MoveRule(string piece, CoordExpr from, CoordExpr to, bool targetEmpty, Expression condition, Statement action)
+        public MoveRule(string piece, CoordExpr from, CoordExpr to, bool targetEmpty, string label, Expression condition, Statement action, Game g)
         {
             PieceType = piece;
             From = from;
             To = to;
             TargetMustBeEmpty = targetEmpty;
+            Label = label;
             Condition = condition;
             this.action = action;
         }
@@ -43,6 +45,7 @@ namespace Level14.BoardGameRules
         {
             string extraRules = "";
             if (TargetMustBeEmpty) extraRules += " Target must be empty.";
+            if (Label != null) extraRules += " #" + Label;
             return string.Format("{0} can move from {1} to {2}.{3}", PieceType, From, To, extraRules);
         }
     }

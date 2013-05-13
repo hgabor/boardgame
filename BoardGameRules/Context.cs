@@ -31,9 +31,9 @@ namespace Level14.BoardGameRules
             return ret;
         }
 
-        internal void SetVariable(string name, object value)
+        internal virtual void SetVariable(string name, object value)
         {
-            if (parent != null && parent.GetVariable(name) != null)
+            if (parent != null && parent.HasVariable(name))
             {
                 parent.SetVariable(name, value);
             }
@@ -41,6 +41,11 @@ namespace Level14.BoardGameRules
             {
                 vars[name] = value;
             }
+        }
+
+        protected virtual bool HasVariable(string name)
+        {
+            return vars.ContainsKey(name);
         }
 
         internal Player GetPlayer(int i)

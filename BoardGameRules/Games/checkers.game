@@ -10,7 +10,8 @@ Settings (
 # Functions()
 
 Init (
-	capturing := False;
+	mustMoveWith := None;
+	captured := False;
 )
 
 StartingBoard (
@@ -39,33 +40,79 @@ Moves (
 	king: {_, _} -> Empty {x-1, y-1} ;
 
 	# Captures
-	piece: {_, _} -> Empty {x+2, y+2} If PieceAt({x+1,y+1}).Owner = OppositePlayer Then
-		RemovePiece({x+1,y+1});
-		capturing := True;
-	End;
-	piece: {_, _} -> Empty {x-2, y+2} If PieceAt({x-1,y+1}).Owner = OppositePlayer Then
-		RemovePiece({x-1,y+1});
-		capturing := True;
-	End;
-	king: {_, _} -> Empty {x+2, y+2} If PieceAt({x+1,y+1}).Owner = OppositePlayer Then
-		RemovePiece({x+1,y+1});
-		capturing := True;
-	End;
-	king: {_, _} -> Empty {x+2, y-2} If PieceAt({x-1,y-1}).Owner = OppositePlayer Then
-		RemovePiece({x+1,y-1});
-		capturing := True;
-	End;
-	king: {_, _} -> Empty {x-2, y+2} If PieceAt({x-1,y+1}).Owner = OppositePlayer Then
-		RemovePiece({x-1,y+1});
-		capturing := True;
-	End;
-	king: {_, _} -> Empty {x-2, y-2} If PieceAt({x-1,y-1}).Owner = OppositePlayer Then
-		RemovePiece({x-1,y-1});
-	End;
+	piece: {_, _} -> Empty {x+2, y+2}
+		Label capture
+		If PieceAt({x+1,y+1}).Owner = OppositePlayer Then
+			RemovePiece({x+1,y+1});
+			captured := True;
+			mustMoveWith := to;
+		End;
+	piece: {_, _} -> Empty {x-2, y+2}
+		Label capture
+		If PieceAt({x-1,y+1}).Owner = OppositePlayer Then
+			RemovePiece({x-1,y+1});
+			captured := True;
+			mustMoveWith := to;
+		End;
+	king: {_, _} -> Empty {x+2, y+2}
+		Label capture
+		If PieceAt({x+1,y+1}).Owner = OppositePlayer Then
+			RemovePiece({x+1,y+1});
+			captured := True;
+			mustMoveWith := to;
+		End;
+	king: {_, _} -> Empty {x+2, y-2}
+		Label capture
+		If PieceAt({x+1,y-1}).Owner = OppositePlayer Then
+			RemovePiece({x+1,y-1});
+			captured := True;
+			mustMoveWith := to;
+		End;
+	king: {_, _} -> Empty {x-2, y+2}
+		Label capture
+		If PieceAt({x-1,y+1}).Owner = OppositePlayer Then
+			RemovePiece({x-1,y+1});
+			captured := True;
+			mustMoveWith := to;
+		End;
+	king: {_, _} -> Empty {x-2, y-2}
+		Label capture
+		If PieceAt({x-1,y-1}).Owner = OppositePlayer Then
+			RemovePiece({x-1,y-1});
+			captured := True;
+			mustMoveWith := to;
+		End;
 )
 
 Events (
 	Player(1).CannotMove (
-		Win(Player(2));
+		If mustMoveWith = None Then
+			Win(Player(2));
+		End
+		mustMoveWith := None;
+	)
+	Player(1).FinishedMove (
+		If captured Then
+			NextPlayer(CurrentPlayer);
+			captured := False;
+		End
+		#DebugBreak();
+		If y = 8 Then
+			NextPlayer(OppositePlayer);
+			captured := False;
+			mustMoveWith := None;
+			RemovePiece(to);
+			Place(king, to);
+		End
+	)
+	Player(1).BeforeMove (
+		# Ütést folytatni
+		If mustMoveWith != None Then
+			AllowedMoves := [Select $ From AllowedMoves Where (label = capture And from = mustMoveWith)];
+		End
+		# Ütéskényszer
+		If mustMoveWith = None And Count([Select $ From AllowedMoves Where label = capture]) > 0 Then
+			AllowedMoves := [Select $ From AllowedMoves Where label = capture];
+		End
 	)
 )
