@@ -11,7 +11,7 @@ namespace Level14.BoardGameRules
     {
         public AstParserRuleReturnScope<object, IToken> parse()
         {
-            return this.sentence();
+            return this.rulebook();
         }
 
         List<string> errors = new List<string>();

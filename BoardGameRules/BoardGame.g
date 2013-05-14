@@ -219,4 +219,4 @@ event: 'Only'? eventType ( ',' eventType )* '(' statement+ ')' -> ^(EVENT ^(EVEN
 eventType: playerRef '.' NAME -> ^(EVENTTYPE playerRef NAME);
 
 // Root parser rule
-sentence: settings functionBlock? init? startingBoard? moves events EOF;
+rulebook: settings functionBlock? init? startingBoard? moves events EOF;
