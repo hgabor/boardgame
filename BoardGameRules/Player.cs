@@ -10,7 +10,7 @@ namespace Level14.BoardGameRules
     {
         public int ID { get; private set; }
 
-        public Player(int id)
+        internal Player(int id)
         {
             this.ID = id;
         }

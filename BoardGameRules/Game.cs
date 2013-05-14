@@ -66,7 +66,7 @@ namespace Level14.BoardGameRules
 
         private Board board;
 
-        public bool IsValidPiece(string type)
+        internal bool IsValidPiece(string type)
         {
             return pieceTypes.Contains(type);
         }

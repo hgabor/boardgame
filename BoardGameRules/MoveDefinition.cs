@@ -7,12 +7,12 @@ namespace Level14.BoardGameRules
 {
     public class MoveDefinition: Context
     {
-        public string PieceType;
-        public string Label;
-        public Coords From;
-        public Coords To;
+        public readonly string PieceType;
+        public readonly string Label;
+        public readonly Coords From;
+        public readonly Coords To;
 
-        public MoveDefinition(string pieceType, string label, Coords from, Coords to, Game game)
+        internal MoveDefinition(string pieceType, string label, Coords from, Coords to, Game game)
             : base(game)
         {
             this.PieceType = pieceType;

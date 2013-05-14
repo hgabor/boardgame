@@ -10,7 +10,7 @@ namespace Level14.BoardGameRules
         public string Type { get; private set; }
         public Player Owner { get; private set; }
 
-        public Piece(string type, Player owner, Game g)
+        internal Piece(string type, Player owner, Game g)
             : base(g)
         {
             this.Type = type;
@@ -42,7 +42,7 @@ namespace Level14.BoardGameRules
             }
         }
 
-        public Coords GetPosition(Player asker)
+        internal Coords GetPosition(Player asker)
         {
             foreach (var kvp in Game.GetPieces(asker))
             {
