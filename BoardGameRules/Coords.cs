@@ -85,45 +85,6 @@ namespace Level14.BoardGameRules
             return Array.ConvertAll(this.coords, gameInt => (int)gameInt);
         }
 
-        public bool IsLessThan(Coords that)
-        {
-            if (this.coords.Length != that.coords.Length) throw new ArgumentException("Different dimensions.");
-
-            for (int i = 0; i < this.coords.Length; i++)
-            {
-                if (!(this[i] < that[i])) return false;
-            }
-            return true;
-        }
-        public bool IsLessThanOrEquals(Coords that)
-        {
-            if (this.coords.Length != that.coords.Length) throw new ArgumentException("Different dimensions.");
-
-            for (int i = 0; i < this.coords.Length; i++)
-            {
-                if (!(this[i] <= that[i])) return false;
-            }
-            return true;
-        }
-        public bool IsGreaterThan(Coords that)
-        {
-            if (this.coords.Length != that.coords.Length) throw new ArgumentException("Different dimensions.");
-            for (int i = 0; i < this.coords.Length; i++)
-            {
-                if (!(this[i] > that[i])) return false;
-            }
-            return true;
-        }
-        public bool IsGreaterThanOrEquals(Coords that)
-        {
-            if (this.coords.Length != that.coords.Length) throw new ArgumentException("Different dimensions.");
-            for (int i = 0; i < this.coords.Length; i++)
-            {
-                if (!(this[i] >= that[i])) return false;
-            }
-            return true;
-        }
-
         public override bool Equals(object obj)
         {
             Coords that = obj as Coords;
