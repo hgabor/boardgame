@@ -139,7 +139,22 @@ namespace Level14.BoardGameRules
                             {
                                 if (asker == GetPlayer(2))
                                 {
-                                    return new Coords(new int[]{9 - coord[0], 9 - coord[1]}, coord.PlaceHolders);
+                                    return new Coords(new int[] { Size[0] + 1 - coord[0], Size[0] + 1 - coord[1] }, coord.PlaceHolders);
+                                }
+                                else
+                                {
+                                    return coord;
+                                }
+                            };
+                            break;
+                        case "MirrorOfPlayer1":
+                            mirrorEvents = true;
+                            mirrorMoves = true;
+                            board.Transformation = (asker, coord) =>
+                            {
+                                if (asker == GetPlayer(2))
+                                {
+                                    return new Coords(new int[] { coord[0], Size[0] + 1 - coord[1] }, coord.PlaceHolders);
                                 }
                                 else
                                 {

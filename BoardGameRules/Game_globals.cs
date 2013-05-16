@@ -51,6 +51,11 @@ namespace Level14.BoardGameRules
                 p.Lost = true;
             }
 
+            public static object Max(Context ctx, IEnumerable<object> set)
+            {
+                return set.Max();
+            }
+
             public static object Min(Context ctx, IEnumerable<object> set)
             {
                 return set.Min();
@@ -110,6 +115,7 @@ namespace Level14.BoardGameRules
                 "DebugPrint",
                 "IsEmpty",
                 "Lose",
+                "Max",
                 "Min",
                 "NextPlayer",
                 "PieceAt",

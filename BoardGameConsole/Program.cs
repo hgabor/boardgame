@@ -82,6 +82,29 @@ namespace Level14.BoardGameConsole
             Console.WriteLine("  " + string.Join(", ", game.CurrentPlayer.GetOffboard()));
         }
 
+        static Piece PieceChooser(IEnumerable<Piece> pAll)
+        {
+            List<Piece> pieces = new List<Piece>(pAll);
+            Piece chosen = null;
+            while (chosen == null)
+            {
+                Console.WriteLine("Choose a piece, type its ID:");
+                for (int i = 0; i < pieces.Count; i++)
+                {
+                    Piece p = pieces[i];
+                    Console.WriteLine("{0,4}: {1} {2}", i, p.GetPosition(), p);
+                }
+                Console.Write(">> ");
+                string strId = Console.ReadLine();
+                int id;
+                if (int.TryParse(strId, out id) && id >= 0 && id < pieces.Count)
+                {
+                    chosen = pieces[id];
+                }
+            }
+            return chosen;
+        }
+
         static void PrintHelp()
         {
             Console.WriteLine("Supported commands:");
@@ -140,6 +163,8 @@ namespace Level14.BoardGameConsole
                 }
 
                 Game game = new Game(System.IO.File.ReadAllText(fileName));
+
+                game.SetSelectPieceFunction(PieceChooser);
 
                 Console.WriteLine("Game loaded successfully");
 

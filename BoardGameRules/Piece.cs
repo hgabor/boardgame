@@ -42,6 +42,11 @@ namespace Level14.BoardGameRules
             }
         }
 
+        public Coords GetPosition()
+        {
+            return GetPosition(null);
+        }
+
         internal Coords GetPosition(Player asker)
         {
             foreach (var kvp in Game.GetPieces(asker))

@@ -9,7 +9,7 @@ Settings (
 
 Functions (
     InMill(c) (
-        If (c = None) Then Return False; End
+        If (c.Owner = None) Then Return False; End
         x := c(1);
         y := c(2);
         z := c(3);
@@ -68,7 +68,6 @@ Moves (
 
 Events (
     Player(1).CannotMove (
-		DebugPrint(Player(1));
         Win(Player(2));
     )
     Player(1).FinishedMove (
@@ -89,10 +88,9 @@ Events (
     )
     
     Only Player(2).FinishedMove(
-		myset := [Select $ From Pieces Where Owner = Player(2) And Position = None];
+        myset := [Select $ From Pieces Where Owner = Player(2) And Position = None];
         If Count(myset) = 0 Then
             phase := 2;
         End
-		#DebugBreak();
     )
 )
