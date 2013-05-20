@@ -9,7 +9,8 @@ Settings (
 
 Functions (
     InMill(c) (
-        If (c.Owner = None) Then Return False; End
+        If (c = None) Then Return False; End
+		If PieceAt(c) = None Then Return False; End
         x := c(1);
         y := c(2);
         z := c(3);
