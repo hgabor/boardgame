@@ -33,7 +33,7 @@ namespace Level14.BoardGameGUI
                 BitmapImage img = new BitmapImage(new Uri(System.IO.Directory.GetCurrentDirectory() + @"\Images\" + gamename + @"\bg.png"));
                 pieces.Add("bg", img);
             }
-            catch (System.IO.FileNotFoundException e)
+            catch (System.IO.IOException e)
             {
                 // Don't worry about it, we'll draw a checkerboard instead
             }
@@ -51,7 +51,7 @@ namespace Level14.BoardGameGUI
                         BitmapImage img = new BitmapImage(new Uri(System.IO.Directory.GetCurrentDirectory() + @"\Images\" + gamename + @"\" + pieceName + ".png"));
                         pieces.Add(pieceName, img);
                     }
-                    catch (System.IO.FileNotFoundException e)
+                    catch (System.IO.IOException e)
                     {
                         // We'll use a fallback image named "pieceX" where X is the player
                         pieces.Add(pieceName, pieces[fallbackName]);

@@ -36,6 +36,10 @@ namespace Level14.BoardGameRules
             {
                 return Owner;
             }
+            else if (name == "Type")
+            {
+                return Type;
+            }
             else
             {
                 return base.GetVariable(name);

@@ -53,6 +53,9 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <Content Include="Games\ludus-latrunculorum.game">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Games\pegsolitaire.game">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

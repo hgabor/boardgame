@@ -533,7 +533,7 @@ namespace Level14.BoardGameRules
         {
             // If current player cannot move...
             int counter = 0;
-            while (true)
+            while (!GameOver)
             {
                 counter++;
                 if (counter > 100)
@@ -597,6 +597,7 @@ namespace Level14.BoardGameRules
                         Context ctx = new Context(globalContext);
                         ctx.SetXYZ(c, CurrentPlayer);
                         var cT = Transform(c, CurrentPlayer);
+                        ctx.SetVariable("to", cT);
                         if (MoveIsValidGlobal(null, c, ctx) && MoveIsValidForRule(rule, p, null, cT, ctx))
                         {
                             moves.Add(new MoveDefinition(pieceType: p.Type, label: rule.Label, from: null, to: c, game: this));
@@ -615,6 +616,8 @@ namespace Level14.BoardGameRules
                         ctx.SetXYZ(from, CurrentPlayer);
                         var fromT = Transform(from, CurrentPlayer);
                         var toT = Transform(to, CurrentPlayer);
+                        ctx.SetVariable("from", fromT);
+                        ctx.SetVariable("to", toT);
                         if (MoveIsValidGlobal(from, to, ctx) && MoveIsValidForRule(rule, null, fromT, toT, ctx))
                         {
                             moves.Add(new MoveDefinition(pieceType: board.PieceAt(from, null).Type, label: rule.Label, from: from, to: to, game: this));

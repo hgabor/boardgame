@@ -1,0 +1,159 @@
+﻿# Centuriák csatája, variáció
+# Eredeti nevén: Ludus latrunculorum (tolvajocskák játéka)
+# Az 50 táblás játék c. könyvből
+
+Settings (
+	PlayerCount: 2;
+	PieceTypes: piece, centurio;
+	BoardDimensions: {8, 7};
+	RulesOfPlayer2: SameAsPlayer1;
+)
+
+Functions (
+	# Megvizsgálja, két koordináta egymás mellet van-e
+	IsNextTo(c1, c2) (
+		c1_x := c1(1);
+		c1_y := c1(2);
+		c2_x := c2(1);
+		c2_y := c2(2);
+		If c1_x = c2_x Then
+			If c1_y - c2_y = 1 Or c1_y - c2_y = 0-1 Then
+				Return True;
+			End
+			Return False;
+		End
+		If c1_y = c2_y Then
+			If c1_x - c2_x = 1 Or c1_x - c2_x = 0-1 Then
+				Return True;
+			End
+		End
+		Return False;
+	)
+
+	TryCapture(c) (
+		x := c(1);
+		y := c(2);
+		If PieceAt({x, y+1}).Owner = OppositePlayer And PieceAt({x, y+2}).Owner = CurrentPlayer Then
+			RemovePiece({x, y+1});
+		End
+		If PieceAt({x, y-1}).Owner = OppositePlayer And PieceAt({x, y-2}).Owner = CurrentPlayer Then
+			RemovePiece({x, y-1});
+		End
+		If PieceAt({x+1, y}).Owner = OppositePlayer And PieceAt({x+2, y}).Owner = CurrentPlayer Then
+			RemovePiece({x+1, y});
+		End
+		If PieceAt({x-1, y}).Owner = OppositePlayer And PieceAt({x-2, y}).Owner = CurrentPlayer Then
+			RemovePiece({x-1, y});
+		End
+	)
+)
+
+Init (
+	# Kettesével helyezzük a táblára a bábukat egymás mellé, ezért
+	# meg kell jegyezni az előző bábu helyét.
+	justPlaced := None;
+
+	# Első fázis a táblára helyezés, második fázis a csata
+	phase := 1;
+
+	# Ha egyik játékos sem tud lépni, akkor a katonák száma dönt...
+	oppCannotMove := False;
+
+	canCapture := False;
+)
+
+StartingBoard (
+	# 16 bábu + 1 centurio
+	Player(1) (
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		centurio: Offboard;
+	)
+	Player(2) (
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		centurio: Offboard;
+	)
+)
+
+Moves (
+	# 1. fázis, táblára helyezés
+	# Párosával, egymás mellé
+	piece: Offboard -> Empty {_, _}
+		If justPlaced = None Then
+			justPlaced := to;
+			NextPlayer(CurrentPlayer);
+		End;
+	piece: Offboard -> Empty {_, _}
+		If justPlaced != None And IsNextTo(to, justPlaced) Then
+			justPlaced := None;
+		End;
+
+	# Akkor tehetjük fel, ha már senki más nincs a tábla mellett
+	centurio: Offboard -> Empty {_, _}
+		If Count([Select $ From Pieces Where Type = piece And Position = None]) = 0;
+
+	# Sima lépések
+	piece: {_, _} -> Empty {x+1, y} If phase = 2;
+	piece: {_, _} -> Empty {x-1, y} If phase = 2;
+	piece: {_, _} -> Empty {x, y+1} If phase = 2;
+	piece: {_, _} -> Empty {x, y-1} If phase = 2;
+	centurio: {_, _} -> Empty {x+1, y} If phase = 2;
+	centurio: {_, _} -> Empty {x-1, y} If phase = 2;
+	centurio: {_, _} -> Empty {x, y+1} If phase = 2;
+	centurio: {_, _} -> Empty {x, y-1} If phase = 2;
+
+	# Centurio ugrani is tud
+	centurio: {_, _} -> Empty {x+2, y} If phase = 2 And PieceAt({x+1, y}).Owner = OppositePlayer;
+	centurio: {_, _} -> Empty {x-2, y} If phase = 2 And PieceAt({x-1, y}).Owner = OppositePlayer;
+	centurio: {_, _} -> Empty {x, y+2} If phase = 2 And PieceAt({x, y+1}).Owner = OppositePlayer;
+	centurio: {_, _} -> Empty {x, y-2} If phase = 2 And PieceAt({x, y-1}).Owner = OppositePlayer;
+)
+
+Events (
+	Player(1).CannotMove (
+		If oppCannotMove Then
+			p1Count := Count([Select $ From Pieces Where Owner = Player(1)]);
+			p2Count := Count([Select $ From Pieces Where Owner = Player(2)]);
+			If p1Count > p2Count Then
+				Win(Player(1));
+			End
+			If p1Count < p2Count Then
+				Win(Player(2));
+			End
+			If p1Count = p2Count Then
+				Lose(Player(1));
+				Lose(Player(2));
+			End
+		End
+		oppCannotMove := True;
+	)
+
+	Player(1).BeforeMove (
+		If phase = 2 Then
+			canCapture := True;
+		End
+		If oppCannotMove And Count([Select $ From AllowedMoves]) > 0 Then
+			Win(Player(1));
+		End
+	)
+
+	Player(1).FinishedMove (
+		oppCannotMove := False;
+		If canCapture Then
+			TryCapture(to);
+		End
+	)
+
+    Only Player(2).FinishedMove(
+        myset := [Select $ From Pieces Where Owner = Player(2) And Position = None];
+        If Count(myset) = 0 Then
+            phase := 2;
+        End
+    )
+)
+
