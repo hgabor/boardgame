@@ -1,0 +1,153 @@
+﻿# Várvédelem
+# Az 50 táblás játék c. könyvből
+
+Settings (
+	PlayerCount: 2;
+    PieceTypes: soldier, knight;
+    BoardDimensions: {7, 7};
+)
+
+Init (
+	mustMoveWith := None;
+	captured := False;
+	p1canMove := False;
+)
+
+StartingBoard (
+    Valid (
+        (x >= 3 And x <= 5) Or
+        (y >= 3 And y <= 5);
+    )
+	Player(1) (
+		knight: Offboard; knight: Offboard;
+	)
+	Player(2) (
+		soldier: {1, 5}; soldier: {2, 5};                                                    soldier: {6, 5}; soldier: {7, 5};
+		soldier: {1, 4}; soldier: {2, 4}; soldier: {3, 4}; soldier: {4, 4}; soldier: {5, 4}; soldier: {6, 4}; soldier: {7, 4};
+		soldier: {1, 3}; soldier: {2, 3}; soldier: {3, 3}; soldier: {4, 3}; soldier: {5, 3}; soldier: {6, 3}; soldier: {7, 3};
+		                                  soldier: {3, 2}; soldier: {4, 2}; soldier: {5, 2};
+		                                  soldier: {3, 1}; soldier: {4, 1}; soldier: {5, 1};
+	)
+)
+
+Moves (
+	# Katonával előre vagy oldalra lehet lépni
+	soldier: {_, _} -> Empty {x, y+1};
+	soldier: {_, _} -> Empty {x+1, y};
+	soldier: {_, _} -> Empty {x-1, y};
+	# Lovagokat először táblára kell helyezni
+	knight: Offboard -> Empty {_, _};
+	# Lovaggal bármerre, akár átlósan is
+	knight: {_, _} -> Empty {x, y+1} If p1canMove;
+	knight: {_, _} -> Empty {x, y-1} If p1canMove;
+	knight: {_, _} -> Empty {x+1, y+1} If p1canMove;
+	knight: {_, _} -> Empty {x+1, y-1} If p1canMove;
+	knight: {_, _} -> Empty {x-1, y+1} If p1canMove;
+	knight: {_, _} -> Empty {x-1, y-1} If p1canMove;
+	knight: {_, _} -> Empty {x+1, y} If p1canMove;
+	knight: {_, _} -> Empty {x-1, y} If p1canMove;
+	# Ütések
+	knight: {_, _} -> Empty {x, y+2}
+		Label capture
+		If PieceAt({x,y+1}).Owner = OppositePlayer And p1canMove Then
+			RemovePiece({x,y+1});
+			captured := True;
+			mustMoveWith := to;
+		End;
+	knight: {_, _} -> Empty {x, y-2}
+		Label capture
+		If PieceAt({x,y-1}).Owner = OppositePlayer And p1canMove Then
+			RemovePiece({x,y-1});
+			captured := True;
+			mustMoveWith := to;
+		End;
+	knight: {_, _} -> Empty {x+2, y+2}
+		Label capture
+		If PieceAt({x+1,y+1}).Owner = OppositePlayer And p1canMove Then
+			RemovePiece({x+1,y+1});
+			captured := True;
+			mustMoveWith := to;
+		End;
+	knight: {_, _} -> Empty {x+2, y-2}
+		Label capture
+		If PieceAt({x+1,y-1}).Owner = OppositePlayer And p1canMove Then
+			RemovePiece({x+1,y-1});
+			captured := True;
+			mustMoveWith := to;
+		End;
+	knight: {_, _} -> Empty {x-2, y+2}
+		Label capture
+		If PieceAt({x-1,y+1}).Owner = OppositePlayer And p1canMove Then
+			RemovePiece({x-1,y+1});
+			captured := True;
+			mustMoveWith := to;
+		End;
+	knight: {_, _} -> Empty {x-2, y-2}
+		Label capture
+		If PieceAt({x-1,y-1}).Owner = OppositePlayer And p1canMove Then
+			RemovePiece({x-1,y-1});
+			captured := True;
+			mustMoveWith := to;
+		End;
+	knight: {_, _} -> Empty {x+2, y}
+		Label capture
+		If PieceAt({x+1,y}).Owner = OppositePlayer And p1canMove Then
+			RemovePiece({x+1,y});
+			captured := True;
+			mustMoveWith := to;
+		End;
+	knight: {_, _} -> Empty {x-2, y}
+		Label capture
+		If PieceAt({x-1,y}).Owner = OppositePlayer And p1canMove Then
+			RemovePiece({x-1,y});
+			captured := True;
+			mustMoveWith := to;
+		End;
+
+)
+
+Events (
+	Player(1).FinishedMove (
+		If Count([Select $ From Pieces Where Position = None]) > 0 Then
+			p1canMove := True;
+			NextPlayer(Player(1));
+			Return None;
+		End
+		# Ütés után újra a lovag jön
+		If captured Then
+			NextPlayer(Player(1));
+			captured := False;
+		End
+		# 9-nél kevesebb bábuval nem lehet elfoglalni a várat
+		If Count([Select $ From Pieces Where Owner = Player(2)]) < 9 Then
+			Win(Player(1));
+		End
+	)
+	Player(2).FinishedMove (
+		# A katonák célja: elfoglalni a várat
+		If Count([Select $ From Pieces Where x >= 3 And x <= 5 And y >= 5 And Owner = Player(2)]) = 9 Then
+			Win(Player(2));
+		End
+	)
+	Player(1).CannotMove (
+		If mustMoveWith = None Then
+			Win(Player(2));
+		End
+		# Ütés befejezése után, ha nem tudunk lépni, nem baj
+		mustMoveWith := None;
+	)
+	Player(2).CannotMove (
+		# Be lettek szorítva
+		Win(Player(1));
+	)
+	Player(1).BeforeMove (
+		# Ütést folytatni
+		If mustMoveWith != None Then
+			AllowedMoves := [Select $ From AllowedMoves Where (label = capture And from = mustMoveWith)];
+		End
+		# Ütéskényszer
+		If mustMoveWith = None And Count([Select $ From AllowedMoves Where label = capture]) > 0 Then
+			AllowedMoves := [Select $ From AllowedMoves Where label = capture];
+		End
+	)
+)
