@@ -1,0 +1,50 @@
+﻿# Do-guti (Beszorítós)
+# Az 50 táblás játék c. könyvből
+
+Settings (
+	PlayerCount: 2;
+	BoardDimensions: {3, 3};
+	RulesOfPlayer2: SameAsPlayer1;
+	PieceTypes: piece;
+)
+
+StartingBoard (
+	Player(1) (
+		# Felső sor
+		piece: {1, 3};
+		piece: {3, 3};
+	)
+	Player(2) (
+		# Alsó sor
+		piece: {1, 1};
+		piece: {3, 1};
+	)
+)
+
+Moves (
+	# Bal alsó
+	piece: {1, 1} -> Empty {1, 3};
+	piece: {1, 1} -> Empty {2, 2};
+	piece: {1, 1} -> Empty {3, 1};
+	# Jobb alsó
+	piece: {3, 1} -> Empty {1, 1};
+	piece: {3, 1} -> Empty {2, 2};
+	piece: {3, 1} -> Empty {3, 3};
+	# Középső
+	piece: {2, 2} -> Empty {1, 1};
+	piece: {2, 2} -> Empty {1, 3};
+	piece: {2, 2} -> Empty {3, 1};
+	piece: {2, 2} -> Empty {3, 3};
+	# Bal felső
+	piece: {1, 3} -> Empty {1, 1};
+	piece: {1, 3} -> Empty {2, 2};
+	# Jobb felső
+	piece: {3, 3} -> Empty {2, 2};
+	piece: {3, 3} -> Empty {3, 1};
+)
+
+Events (
+	Player(1).CannotMove (
+		Win(Player(2));
+	)
+)
