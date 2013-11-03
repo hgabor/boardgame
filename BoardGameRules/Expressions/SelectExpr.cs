@@ -34,7 +34,7 @@ namespace Level14.BoardGameRules.Expressions
                     else
                     {
                         Context oContext = (Context)o;
-                        bool result = (bool)where.Eval(new MultiParentContext(c.Game, oContext, c));
+                        bool result = (bool)where.Eval(new MultiParentContext(c.GameState, oContext, c));
                         if (result)
                         {
                             newSet.Add(o);
@@ -50,7 +50,7 @@ namespace Level14.BoardGameRules.Expressions
                     }
                     else
                     {
-                        bool result = (bool)where.Eval(new MultiParentContext(c.Game, oContext, c));
+                        bool result = (bool)where.Eval(new MultiParentContext(c.GameState, oContext, c));
                         if (result)
                         {
                             newSet.Add(varName.Eval(oContext));

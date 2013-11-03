@@ -12,7 +12,7 @@ namespace Level14.BoardGameRules
         public readonly Coords From;
         public readonly Coords To;
 
-        internal MoveDefinition(string pieceType, string label, Coords from, Coords to, Game game)
+        internal MoveDefinition(string pieceType, string label, Coords from, Coords to, GameState game)
             : base(game)
         {
             this.PieceType = pieceType;
@@ -35,9 +35,9 @@ namespace Level14.BoardGameRules
                 case "label":
                     return Label;
                 case "from":
-                    return Game.Transform(From, Game.CurrentPlayer);
+                    return Game.Transform(From, GameState.CurrentPlayer);
                 case "to":
-                    return Game.Transform(To, Game.CurrentPlayer);
+                    return Game.Transform(To, GameState.CurrentPlayer);
                 default:
                     return base.GetVariable(name);
             }

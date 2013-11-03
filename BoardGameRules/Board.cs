@@ -18,14 +18,14 @@ namespace Level14.BoardGameRules
         Dictionary<Coords, Piece> board = new Dictionary<Coords, Piece>();
         public Coords Size { get; private set; }
         private Coords lowerLeft;
-        private Game game;
+        private GameState gameState;
         public CoordTransformation Transformation { get; set; }
 
-        public Board(Coords size, Game game)
+        public Board(Coords size, GameState game)
         {
             this.Size = size;
             lowerLeft = new Coords(Array.ConvertAll(size.ToInt32Array(), i => 1));
-            this.game = game;
+            this.gameState = game;
             this.Valid = RuleType.Invalid;
             Transformation = IdentityTransformation;
         }
@@ -69,7 +69,7 @@ namespace Level14.BoardGameRules
 
         private bool IsValidByRules(Coords c)
         {
-            Context ctx = new Context(game);
+            Context ctx = new Context(gameState);
             ctx.SetXYZ(c, null);
             if (Valid == RuleType.Valid)
             {

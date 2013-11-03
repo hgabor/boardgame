@@ -10,7 +10,7 @@ namespace Level14.BoardGameRules
         public string Type { get; private set; }
         public Player Owner { get; private set; }
 
-        internal Piece(string type, Player owner, Game g)
+        internal Piece(string type, Player owner, GameState g)
             : base(g)
         {
             this.Type = type;
@@ -21,7 +21,7 @@ namespace Level14.BoardGameRules
         {
             if (name == "x" || name == "y" || name == "z")
             {
-                Coords c = GetPosition(Game.CurrentPlayer);
+                Coords c = GetPosition(GameState.CurrentPlayer);
                 if (c == null) return 0;
                 if (name == "x") return c[0];
                 else if (name == "y") return c[1];
@@ -30,7 +30,7 @@ namespace Level14.BoardGameRules
             }
             else if (name == "Position")
             {
-                return GetPosition(Game.CurrentPlayer);
+                return GetPosition(GameState.CurrentPlayer);
             }
             else if (name == "Owner")
             {

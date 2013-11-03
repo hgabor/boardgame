@@ -9,7 +9,7 @@ namespace Level14.BoardGameRules
     {
         Context[] parents;
 
-        public MultiParentContext(Game g, params Context[] parents)
+        public MultiParentContext(GameState g, params Context[] parents)
             : base(g)
         {
             this.parents = (Context[])parents.Clone();

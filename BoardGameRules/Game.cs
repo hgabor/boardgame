@@ -15,8 +15,10 @@ namespace Level14.BoardGameRules
     public partial class Game
     {
         public int PlayerCount { get { return players.Count; } }
-        private int currentPlayer;
-        public Player CurrentPlayer { get { return players[currentPlayer]; } }
+        public Player GetCurrentPlayer(GameState state)
+        {
+            return players[state.CurrentPlayerID];
+        }
         internal Player OverrideNextPlayer { get; set; }
 
         public Coords Size { get { return board.Size; } }
@@ -26,6 +28,8 @@ namespace Level14.BoardGameRules
 
         private IEnumerable<MoveDefinition> allowedMoves;
         private List<MoveRule> moveRules = new List<MoveRule>();
+
+        private List<GameState> oldStates = new List<GameState>();
 
         public IEnumerable<string> PieceTypes
         {
@@ -83,7 +87,7 @@ namespace Level14.BoardGameRules
 
         partial void InitGlobals();
 
-        public Game(string rules)
+        public Game(string rules, out GameState firstState)
         {
             try
             {
@@ -102,7 +106,8 @@ namespace Level14.BoardGameRules
                     throw new InvalidGameException(string.Format("Number of errors: {0} \n\n{1}", errors.Length, msg));
                 }
 
-                globalContext = new GlobalContext(this);
+                var currentState = new GameState(this);
+                globalContext = new GlobalContext(currentState);
                 InitGlobals();
 
                 CommonTree t = (CommonTree)root.Tree;
@@ -111,7 +116,7 @@ namespace Level14.BoardGameRules
                 for (int i = 0; i < playerCount; i++) players.Add(new Player(i+1));
 
                 var size = (Coords)t.GetChild("SETTINGS").GetChild("BoardDimensions").GetOnlyChild().ParseExpr().Eval(globalContext);
-                board = new Board(size, this);
+                board = new Board(size, currentState);
 
                 for (int i = 0; i < t.GetChild("SETTINGS").GetChild("PieceTypes").ChildCount; i++)
                 {
@@ -216,7 +221,7 @@ namespace Level14.BoardGameRules
                             case "STARTINGPIECES":
                                 int ownerInt = (int)ch.GetChild("PLAYERREF").GetOnlyChild().ParseExpr().Eval(globalContext);
                                 Player owner = GetPlayer(ownerInt);
-                                currentPlayer = ownerInt - 1;
+                                currentState.CurrentPlayerID = ownerInt - 1;
 
                                 for (int j = 0; j < ch.GetChild("LIST").ChildCount; j++)
                                 {
@@ -237,10 +242,10 @@ namespace Level14.BoardGameRules
                                     {
                                         throw new Exception("Cannot happen");
                                     }
-                                    var p = new Piece(type, owner, this);
+                                    var p = new Piece(type, owner, currentState);
                                     if (coords == null)
                                     {
-                                        CurrentPlayer.AddOffboard(p);
+                                        currentState.CurrentPlayer.AddOffboard(p);
                                     }
                                     else if (!board.TryPut(coords, p, null))
                                     {
@@ -323,7 +328,7 @@ namespace Level14.BoardGameRules
                     for (int eventI = 0; eventI < eventNode.GetChild("EVENTTYPES").ChildCount; eventI++)
                     {
                         var eventTypeNode = eventNode.GetChild("EVENTTYPES").GetChild(eventI);
-                        Player p = (Player)eventTypeNode.GetChild("PLAYERREF").ParseExpr().Eval(new Context(this));
+                        Player p = (Player)eventTypeNode.GetChild("PLAYERREF").ParseExpr().Eval(new Context(currentState));
                         string eventType = eventTypeNode.GetChild(1).Text;
                         switch (eventType)
                         {
@@ -343,8 +348,9 @@ namespace Level14.BoardGameRules
 
                 }
 
-                currentPlayer = 0;
-                PreMoveActions();
+                currentState.CurrentPlayerID = 0;
+                PreMoveActions(currentState);
+                firstState = currentState;
             }
             catch (InvalidGameException)
             {
@@ -356,22 +362,23 @@ namespace Level14.BoardGameRules
             }
         }
 
-        public bool TryMakeMoveFromOffboard(Piece piece, Coords to)
+        public GameState TryMakeMoveFromOffboard(GameState oldState, Piece piece, Coords to)
         {
+            GameState newState = oldState.Clone();
             Context ctx = new Context(this.globalContext);
-            ctx.SetVariable("to", Transform(to, CurrentPlayer));
+            ctx.SetVariable("to", Transform(to, newState.CurrentPlayer));
 
             // piece cannot be null
-            if (piece == null) return false;
+            if (piece == null) return null;
             // Cannot move opponent's piece
-            if (piece.Owner != CurrentPlayer) return false;
+            if (piece.Owner != newState.CurrentPlayer) return null;
 
-            bool isInlist = EnumerateMovesFromOffboard(piece).Any(
+            bool isInlist = EnumerateMovesFromOffboard(newState, piece).Any(
                 md => md.From == null && Coords.Match(md.To, to) && md.PieceType == piece.Type);
-            if (!isInlist) return false;
+            if (!isInlist) return null;
 
 
-            if (!MoveIsValidGlobal(null, to, ctx)) return false;
+            if (!MoveIsValidGlobal(newState, null, to, ctx)) return null;
 
 
             Piece oppPiece = board.PieceAt(to, null);
@@ -380,14 +387,14 @@ namespace Level14.BoardGameRules
                 // Only offboard rules here
                 if (!rule.OffboardRule) continue;
 
-                if (!MoveIsValidForRule(rule, piece, null, to, ctx)) continue;
+                if (!MoveIsValidForRule(newState, rule, piece, null, to, ctx)) continue;
 
 
                 // Move is valid
                 rule.RunAction(ctx);
 
                 // Perform the move
-                if (!CurrentPlayer.RemoveOffBoard(piece))
+                if (!newState.CurrentPlayer.RemoveOffBoard(piece))
                 {
                     // Original piece was removed, should not happen!
                     throw new InvalidGameException("Cannot move from offboard, piece " + oppPiece.ToString() + " was removed!");
@@ -398,18 +405,19 @@ namespace Level14.BoardGameRules
                     throw new InvalidGameException("Cannot move to " + to.ToString() + ", piece " + oppPiece.ToString() + " is in the way!");
                 }
 
-                ctx.SetXYZ(to, CurrentPlayer);
-                CurrentPlayer.PostMove(ctx);
-                PostMoveActions();
+                ctx.SetXYZ(to, newState.CurrentPlayer);
+                newState.CurrentPlayer.PostMove(ctx);
+                PostMoveActions(newState);
 
                 // Move was performed
-                return true;
+                oldStates.Add(oldState);
+                return newState;
             }
             // No suitable rule found.
-            return false;
+            return null;
         }
 
-        internal bool MoveIsValidGlobal(Coords from, Coords to, Context ctx)
+        internal bool MoveIsValidGlobal(GameState currentState, Coords from, Coords to, Context ctx)
         {
             if (from != null && !board.IsValidPlace(from)) return false;
             if (to != null && !board.IsValidPlace(to)) return false;
@@ -423,7 +431,7 @@ namespace Level14.BoardGameRules
                 if (piece == null) return false;
 
                 // Cannot move opponent's piece
-                if (piece.Owner != CurrentPlayer) return false;
+                if (piece.Owner != currentState.CurrentPlayer) return false;
 
                 // Cannot stay in place
                 if (Coords.Match(from, to)) return false;
@@ -432,10 +440,10 @@ namespace Level14.BoardGameRules
             return true;
         }
 
-        internal bool MoveIsValidForRule(MoveRule rule, Piece piece, Coords from, Coords to, Context ctx)
+        internal bool MoveIsValidForRule(GameState currentState, MoveRule rule, Piece piece, Coords from, Coords to, Context ctx)
         {
-            if (from != null) piece = board.PieceAt(from, CurrentPlayer);
-            Piece oppPiece = board.PieceAt(to, CurrentPlayer);
+            if (from != null) piece = board.PieceAt(from, currentState.CurrentPlayer);
+            Piece oppPiece = board.PieceAt(to, currentState.CurrentPlayer);
 
             // Rule must be applicable to current piece
             if (rule.PieceType != piece.Type) return false;
@@ -451,7 +459,7 @@ namespace Level14.BoardGameRules
 
             if (rule.From == null)
             {
-                if (!CurrentPlayer.GetOffboard().Contains(piece)) return false;
+                if (!currentState.CurrentPlayer.GetOffboard().Contains(piece)) return false;
                 //var toT = board.Transformation(CurrentPlayer, to);
                 ///var toTExpr = board.Transformation(CurrentPlayer, (Coords)rule.To.Eval(ctx));
                 if (!Coords.Match(to, (Coords)rule.To.Eval(ctx))) return false;
@@ -474,23 +482,23 @@ namespace Level14.BoardGameRules
             return true;
         }
 
-        public bool TryMakeMove(Coords from, Coords to) {
-
+        public GameState TryMakeMove(GameState oldState, Coords from, Coords to) {
+            GameState newState = oldState.Clone();
             Context ctx = new Context(this.globalContext);
             // Special vars x, y are from coordinates
-            ctx.SetXYZ(from, CurrentPlayer);
-            ctx.SetVariable("from", Transform(from, CurrentPlayer));
-            ctx.SetVariable("to", Transform(to, CurrentPlayer));
+            ctx.SetXYZ(from, newState.CurrentPlayer);
+            ctx.SetVariable("from", Transform(from, newState.CurrentPlayer));
+            ctx.SetVariable("to", Transform(to, newState.CurrentPlayer));
 
 
-            if (!MoveIsValidGlobal(from, to, ctx)) return false;
+            if (!MoveIsValidGlobal(newState, from, to, ctx)) return null;
 
             Piece piece = board.PieceAt(from, null);
             Piece oppPiece = board.PieceAt(to, null);
 
-            bool isInlist = EnumerateMovesFromCoord(from).Any(
+            bool isInlist = EnumerateMovesFromCoord(newState, from).Any(
                 md => Coords.Match(md.From, from) && Coords.Match(md.To, to));
-            if (!isInlist) return false;
+            if (!isInlist) return null;
 
 
             foreach (var rule in moveRules)
@@ -498,9 +506,9 @@ namespace Level14.BoardGameRules
                 // No offboard rules here
                 if (rule.OffboardRule) continue;
 
-                var fromT = Transform(from, CurrentPlayer);
-                var toT = Transform(to, CurrentPlayer);
-                if (!MoveIsValidForRule(rule, null, fromT, toT, ctx)) continue;
+                var fromT = Transform(from, newState.CurrentPlayer);
+                var toT = Transform(to, newState.CurrentPlayer);
+                if (!MoveIsValidForRule(newState, rule, null, fromT, toT, ctx)) continue;
 
                 // Move is valid
                 rule.RunAction(ctx);
@@ -518,18 +526,19 @@ namespace Level14.BoardGameRules
                     throw new InvalidGameException("Cannot move to " + to.ToString() + ", piece " + oppPiece.ToString() + " is in the way!");
                 }
 
-                ctx.SetXYZ(to, CurrentPlayer);
-                CurrentPlayer.PostMove(ctx);
-                PostMoveActions();
+                ctx.SetXYZ(to, newState.CurrentPlayer);
+                newState.CurrentPlayer.PostMove(ctx);
+                PostMoveActions(newState);
 
                 // Move was performed
-                return true;
+                oldStates.Add(oldState);
+                return newState;
             }
             // No suitable rule found.
-            return false;
+            return null;
         }
 
-        private void PreMoveActions()
+        private void PreMoveActions(GameState currentState)
         {
             // If current player cannot move...
             int counter = 0;
@@ -541,17 +550,17 @@ namespace Level14.BoardGameRules
                     throw new InvalidGameException("Game went into a loop, where no one can move, lose or win.");
                 }
                 allowedMoves = null;
-                allowedMoves = EnumeratePossibleMoves();
-                CurrentPlayer.PreMove(Context.NewLocal(this));
+                allowedMoves = EnumeratePossibleMoves(currentState);
+                currentState.CurrentPlayer.PreMove(Context.NewLocal(this));
                 if (allowedMoves.Count() == 0)
                 {
-                    CurrentPlayer.CannotMove(globalContext);
+                    currentState.CurrentPlayer.CannotMove(globalContext);
                     // In most games if the player cannot move, he loses
-                    if (CurrentPlayer.Lost) return;
+                    if (currentState.CurrentPlayer.Lost) return;
                     else
                     {
                         // But not always, so we should try the next player
-                        currentPlayer = (currentPlayer + 1) % PlayerCount;
+                        currentState.CurrentPlayerID = (currentState.CurrentPlayerID + 1) % PlayerCount;
                     }
                 }
                 else
@@ -561,33 +570,33 @@ namespace Level14.BoardGameRules
             }
         }
 
-        private void PostMoveActions()
+        private void PostMoveActions(GameState state)
         {
-            int startPlayer = currentPlayer;
+            int startPlayer = state.CurrentPlayerID;
 
             do
             {
-                currentPlayer = (currentPlayer + 1) % PlayerCount;
-                if (currentPlayer == startPlayer)
+                state.CurrentPlayerID = (state.CurrentPlayerID + 1) % PlayerCount;
+                if (state.CurrentPlayerID == startPlayer)
                 {
                     break;
                 }
-            } while (CurrentPlayer.Lost);
+            } while (state.CurrentPlayer.Lost);
 
             if (OverrideNextPlayer != null)
             {
-                currentPlayer = OverrideNextPlayer.ID - 1;
+                state.CurrentPlayerID = OverrideNextPlayer.ID - 1;
                 OverrideNextPlayer = null;
             }
 
-            PreMoveActions();
+            PreMoveActions(state);
         }
 
-        public IEnumerable<MoveDefinition> EnumeratePossibleMoves()
+        public IEnumerable<MoveDefinition> EnumeratePossibleMoves(GameState state)
         {
             HashSet<MoveDefinition> moves = new HashSet<MoveDefinition>();
 
-            foreach (var p in CurrentPlayer.GetOffboard())
+            foreach (var p in state.CurrentPlayer.GetOffboard())
             {
                 foreach (var c in board.EnumerateCoords(null))
                 {
@@ -595,12 +604,12 @@ namespace Level14.BoardGameRules
                     {
                         if (rule.From != null) continue;
                         Context ctx = new Context(globalContext);
-                        ctx.SetXYZ(c, CurrentPlayer);
-                        var cT = Transform(c, CurrentPlayer);
+                        ctx.SetXYZ(c, state.CurrentPlayer);
+                        var cT = Transform(c, state.CurrentPlayer);
                         ctx.SetVariable("to", cT);
-                        if (MoveIsValidGlobal(null, c, ctx) && MoveIsValidForRule(rule, p, null, cT, ctx))
+                        if (MoveIsValidGlobal(state, null, c, ctx) && MoveIsValidForRule(state, rule, p, null, cT, ctx))
                         {
-                            moves.Add(new MoveDefinition(pieceType: p.Type, label: rule.Label, from: null, to: c, game: this));
+                            moves.Add(new MoveDefinition(pieceType: p.Type, label: rule.Label, from: null, to: c, game: state));
                         }
                     }
                 }
@@ -613,14 +622,14 @@ namespace Level14.BoardGameRules
                     {
                         if (rule.OffboardRule) continue;
                         Context ctx = new Context(globalContext);
-                        ctx.SetXYZ(from, CurrentPlayer);
-                        var fromT = Transform(from, CurrentPlayer);
-                        var toT = Transform(to, CurrentPlayer);
+                        ctx.SetXYZ(from, state.CurrentPlayer);
+                        var fromT = Transform(from, state.CurrentPlayer);
+                        var toT = Transform(to, state.CurrentPlayer);
                         ctx.SetVariable("from", fromT);
                         ctx.SetVariable("to", toT);
-                        if (MoveIsValidGlobal(from, to, ctx) && MoveIsValidForRule(rule, null, fromT, toT, ctx))
+                        if (MoveIsValidGlobal(state, from, to, ctx) && MoveIsValidForRule(state, rule, null, fromT, toT, ctx))
                         {
-                            moves.Add(new MoveDefinition(pieceType: board.PieceAt(from, null).Type, label: rule.Label, from: from, to: to, game: this));
+                            moves.Add(new MoveDefinition(pieceType: board.PieceAt(from, null).Type, label: rule.Label, from: from, to: to, game: state));
                         }
                     }
                 }
@@ -628,15 +637,15 @@ namespace Level14.BoardGameRules
             return allowedMoves == null ? moves : moves.Intersect(allowedMoves);
         }
 
-        public IEnumerable<MoveDefinition> EnumerateMovesFromCoord(Coords c)
+        public IEnumerable<MoveDefinition> EnumerateMovesFromCoord(GameState state, Coords c)
         {
-            var ret = EnumeratePossibleMoves().Where(md => md.From != null && Coords.Match(c, md.From));
+            var ret = EnumeratePossibleMoves(state).Where(md => md.From != null && Coords.Match(c, md.From));
             return ret;
         }
 
-        public IEnumerable<MoveDefinition> EnumerateMovesFromOffboard(Piece p)
+        public IEnumerable<MoveDefinition> EnumerateMovesFromOffboard(GameState state, Piece p)
         {
-            var ret = EnumeratePossibleMoves().Where(md => md.From == null && md.PieceType == p.Type);
+            var ret = EnumeratePossibleMoves(state).Where(md => md.From == null && md.PieceType == p.Type);
             return ret;
         }
 

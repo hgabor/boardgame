@@ -9,16 +9,19 @@ namespace Level14.BoardGameRules
     {
         Context parent;
         internal Game Game { get; private set; }
+        internal GameState GameState { get; private set; }
         Dictionary<string, object> vars = new Dictionary<string, object>();
 
-        internal Context(Game g) {
-            this.Game = g;
+        internal Context(GameState gs) {
+            this.GameState = gs;
+            this.Game = gs.game;
         }
 
         internal Context(Context parent)
         {
             this.parent = parent;
             this.Game = parent.Game;
+            this.GameState = parent.GameState;
         }
 
         internal virtual object GetVariable(string name) {

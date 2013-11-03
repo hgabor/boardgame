@@ -24,54 +24,55 @@ namespace Level14.BoardGameConsole
             return new Coords(cInt);
         }
 
-        public static Piece FindOffboardPiece(Game game, string type)
+        public static Piece FindOffboardPiece(GameState state, string type)
         {
-            foreach (Piece p in game.CurrentPlayer.GetOffboard())
+            foreach (Piece p in state.CurrentPlayer.GetOffboard())
             {
                 if (p.Type == type) return p;
             }
             return null;
         }
 
-        public static bool PerformMove(Game game, string fromString, string toString)
+        public static GameState PerformMove(Game game, GameState state, string fromString, string toString)
         {
+            GameState newState;
             if (fromString[0] == '#' && toString[0] == '#')
             {
                 Coords from = ParseCoords(fromString.Substring(1));
                 Coords to = ParseCoords(toString.Substring(1));
-                if (!game.TryMakeMove(from, to))
+                if ((newState = game.TryMakeMove(state, from, to)) == null)
                 {
                     Console.WriteLine("Invalid move!");
-                    return false;
+                    return state;
                 }
-                return true;
+                return newState;
             }
             else if (toString[0] == '#')
             {
                 Coords to = ParseCoords(toString.Substring(1));
-                Piece p = FindOffboardPiece(game, fromString);
+                Piece p = FindOffboardPiece(state, fromString);
                 if (p == null)
                 {
                     Console.WriteLine("No such piece offboard!");
-                    return false;
+                    return state;
                 }
-                else if (!game.TryMakeMoveFromOffboard(p, to)) {
+                else if ((newState = game.TryMakeMoveFromOffboard(state, p, to)) == null) {
                     Console.WriteLine("Invalid move!");
-                    return false;
+                    return state;
                 }
-                return true;
+                return newState;
             }
             else {
                 Console.WriteLine("Invalid or unsupported move!");
-                return false;
+                return state;
             }
         }
 
-        public static void PrintBoard(Game game)
+        public static void PrintBoard(Game game, GameState state)
         {
             Console.WriteLine("Board size: {0}", game.Size);
             Console.WriteLine("Player Count: {0}", game.PlayerCount);
-            Console.WriteLine("Current player: {0}", game.CurrentPlayer);
+            Console.WriteLine("Current player: {0}", state.CurrentPlayer);
             Console.WriteLine();
             Console.WriteLine("Onboard pieces:");
             foreach (KeyValuePair<Coords, Piece> kvp in game.GetPieces())
@@ -79,7 +80,7 @@ namespace Level14.BoardGameConsole
                 Console.WriteLine("  {0} - {1}", kvp.Key, kvp.Value);
             }
             Console.WriteLine("Offboard pieces for current player:");
-            Console.WriteLine("  " + string.Join(", ", game.CurrentPlayer.GetOffboard()));
+            Console.WriteLine("  " + string.Join(", ", state.CurrentPlayer.GetOffboard()));
         }
 
         static Piece PieceChooser(IEnumerable<Piece> pAll)
@@ -122,10 +123,10 @@ namespace Level14.BoardGameConsole
             Console.WriteLine("m wolf #4,4      place a 'wolf' from offboard to {4,4}");
         }
 
-        static void PrintMoves(Game game)
+        static void PrintMoves(Game game, GameState state)
         {
             Console.WriteLine("Possible moves:");
-            foreach (var rule in game.EnumeratePossibleMoves())
+            foreach (var rule in game.EnumeratePossibleMoves(state))
             {
                 Console.WriteLine("  " + rule.ToString());
             }
@@ -162,7 +163,8 @@ namespace Level14.BoardGameConsole
                     return;
                 }
 
-                Game game = new Game(System.IO.File.ReadAllText(fileName));
+                GameState state;
+                Game game = new Game(System.IO.File.ReadAllText(fileName), out state);
 
                 game.SetSelectPieceFunction(PieceChooser);
 
@@ -188,16 +190,18 @@ namespace Level14.BoardGameConsole
                             PrintHelp();
                             break;
                         case "b":
-                            PrintBoard(game);
+                            PrintBoard(game, state);
                             break;
                         case "l":
-                            PrintMoves(game);
+                            PrintMoves(game, state);
                             break;
                         case "m":
                             if (command.Length != 3) goto default;
-                            if (PerformMove(game, command[1], command[2]))
+                            GameState newState = PerformMove(game, state, command[1], command[2]);
+                            if (newState != state)
                             {
-                                Console.WriteLine("OK! Next player: {0}", game.CurrentPlayer);
+                                //state = newState;
+                                Console.WriteLine("OK! Next player: {0}", state.CurrentPlayer);
                             }
                             break;
                         case "q":

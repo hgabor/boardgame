@@ -127,6 +127,7 @@
     <Compile Include="Expressions\Expression.cs" />
     <Compile Include="Coords.cs" />
     <Compile Include="Expressions\VarRefExpr.cs" />
+    <Compile Include="GameState.cs" />
     <Compile Include="ICallable.cs" />
     <Compile Include="MoveDefinition.cs" />
     <Compile Include="Statements\AssignmentStatement.cs" />
