@@ -1,0 +1,174 @@
+﻿# Reversi / Ostábla
+
+Settings (
+	PlayerCount: 2;
+	BoardDimensions: {8, 8};
+	PieceTypes: piece;
+	RulesOfPlayer2: SameAsPlayer1;
+)
+
+Functions (
+	DirU(c) (
+		Return {c(1), c(2)+1};
+	)
+	DirD(c) (
+		Return {c(1), c(2)-1};
+	)
+	DirL(c) (
+		Return {c(1)-1, c(2)};
+	)
+	DirR(c) (
+		Return {c(1)+1, c(2)};
+	)
+	DirUR(c) (
+		Return {c(1)+1, c(2)+1};
+	)
+	DirUL(c) (
+		Return {c(1)-1, c(2)+1};
+	)
+	DirDR(c) (
+		Return {c(1)+1, c(2)-1};
+	)
+	DirDL(c) (
+		Return {c(1)-1, c(2)-1};
+	)
+
+	Validate(c, dir, level) (
+		p1 := PieceAt(dir(c));
+		p2 := PieceAt(dir(dir(c)));
+		If p1 = None Then Return False; End
+		If p2 = None Then Return False; End
+		If p1.Owner = OppositePlayer And p2.Owner = CurrentPlayer Then
+			Return True;
+		End
+		If p1.Owner = CurrentPlayer Then
+			Return False;
+		End
+		Return Validate(dir(c), dir, level+1);
+	)
+
+	IsValid(c) (
+		Return
+			Validate(c, DirU, 0) Or
+			Validate(c, DirD, 0) Or
+			Validate(c, DirL, 0) Or
+			Validate(c, DirR, 0) Or
+			Validate(c, DirUR, 0) Or
+			Validate(c, DirUL, 0) Or
+			Validate(c, DirDR, 0) Or
+			Validate(c, DirDL, 0);
+	)
+
+	FlipAll(c, dir) (
+		p := PieceAt(dir(c));
+		If p.Owner = OppositePlayer Then
+			RemovePiece(p);
+			Place(piece, dir(c));
+			FlipAll(dir(c), dir);
+		End
+	)
+
+	EndGame() (
+		p1 := Count([Select $ From Pieces Where Owner = Player(1) And Position != None]);
+		p2 := Count([Select $ From Pieces Where Owner = Player(2) And Position != None]);
+		If p1 > p2 Then
+			Win(Player(1));
+		End
+		If p1 < p2 Then
+			Win(Player(2));
+		End
+		If p1 = p2 Then
+			Lose(Player(1));
+			Lose(Player(2));
+		End
+	)
+)
+
+Init (
+	oppCannotMove := False;
+)
+
+
+StartingBoard (
+	Player(1) (
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: {4, 5};
+		piece: {5, 4};
+	)
+	Player(2) (
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: Offboard; piece: Offboard; piece: Offboard; piece: Offboard;
+		piece: {4, 4};
+		piece: {5, 5};
+	)
+)
+
+Moves (
+	piece: Offboard -> Empty {_, _} If IsValid(to) Then
+		If Validate(to, DirU, 0) Then
+			FlipAll(to, DirU);
+		End
+		If Validate(to, DirD, 0) Then
+			FlipAll(to, DirD);
+		End
+		If Validate(to, DirL, 0) Then
+			FlipAll(to, DirL);
+		End
+		If Validate(to, DirR, 0) Then
+			FlipAll(to, DirR);
+		End
+		If Validate(to, DirUL, 0) Then
+			FlipAll(to, DirUL);
+		End
+		If Validate(to, DirUR, 0) Then
+			FlipAll(to, DirUR);
+		End
+		If Validate(to, DirDR, 0) Then
+			FlipAll(to, DirDR);
+		End
+		If Validate(to, DirDL, 0) Then
+			FlipAll(to, DirDL);
+		End
+	End;
+)
+
+Events (
+	Player(1).CannotMove (
+		If oppCannotMove Then
+			EndGame();
+		End
+		oppCannotMove := True;
+	)
+	Player(1).FinishedMove (
+		oppCannotMove := False;
+	)
+)
