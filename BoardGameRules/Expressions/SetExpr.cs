@@ -14,7 +14,7 @@ namespace Level14.BoardGameRules.Expressions
             this.set = new List<Expression>(set);
         }
 
-        public override object Eval(Context c)
+        public override object Eval(IReadContext c)
         {
             var ret = new List<object>();
             foreach (var item in set)

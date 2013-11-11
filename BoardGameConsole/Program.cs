@@ -75,7 +75,7 @@ namespace Level14.BoardGameConsole
             Console.WriteLine("Current player: {0}", state.CurrentPlayer);
             Console.WriteLine();
             Console.WriteLine("Onboard pieces:");
-            foreach (KeyValuePair<Coords, Piece> kvp in game.GetPieces())
+            foreach (KeyValuePair<Coords, Piece> kvp in game.GetPieces(state))
             {
                 Console.WriteLine("  {0} - {1}", kvp.Key, kvp.Value);
             }

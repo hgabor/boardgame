@@ -7,7 +7,7 @@ namespace Level14.BoardGameRules.Expressions
 {
     class PlaceHolderExpr: Expression
     {
-        public override object Eval(Context c)
+        public override object Eval(IReadContext c)
         {
             return PlaceHolderValue.Value;
         }

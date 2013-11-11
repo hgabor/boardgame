@@ -129,7 +129,10 @@
     <Compile Include="Expressions\VarRefExpr.cs" />
     <Compile Include="GameState.cs" />
     <Compile Include="ICallable.cs" />
+    <Compile Include="IReadContext.cs" />
+    <Compile Include="IWriteContext.cs" />
     <Compile Include="MoveDefinition.cs" />
+    <Compile Include="ReadonlyContextWrapper.cs" />
     <Compile Include="Statements\AssignmentStatement.cs" />
     <Compile Include="Statements\ExprStatement.cs" />
     <Compile Include="TreeHelpers.cs" />

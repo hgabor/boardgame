@@ -43,7 +43,7 @@ namespace Level14.BoardGameRules
 
             public static bool IsEmpty(Context ctx, Coords c)
             {
-                return ctx.Game.board.PieceAt(c, ctx.GameState.CurrentPlayer) == null;
+                return ctx.Game.board.PieceAt(ctx.GameState, c, ctx.GameState.CurrentPlayer) == null;
             }
 
             public static void Lose(Context ctx, Player p)
@@ -68,13 +68,13 @@ namespace Level14.BoardGameRules
 
             public static Piece PieceAt(Context ctx, Coords c)
             {
-                return ctx.Game.board.PieceAt(c, ctx.GameState.CurrentPlayer);
+                return ctx.Game.board.PieceAt(ctx.GameState, c, ctx.GameState.CurrentPlayer);
             }
 
             public static void Place(Context ctx, string piecetype, Coords c)
             {
                 Piece p = new Piece(piecetype, ctx.GameState.CurrentPlayer, ctx.GameState);
-                ctx.Game.board.TryPut(c, p, ctx.GameState.CurrentPlayer);
+                ctx.Game.board.TryPut(ctx.GameState, c, p, ctx.GameState.CurrentPlayer);
             }
 
             public static void RemovePiece(Context ctx, object toRemove)
@@ -82,13 +82,13 @@ namespace Level14.BoardGameRules
                 Coords c = toRemove as Coords;
                 if (c != null)
                 {
-                    ctx.Game.board.TryRemove(c, ctx.GameState.CurrentPlayer);
+                    ctx.Game.board.TryRemove(ctx.GameState, c, ctx.GameState.CurrentPlayer);
                     return;
                 }
                 Piece p = toRemove as Piece;
                 if (p != null)
                 {
-                    ctx.Game.board.TryRemove(p.GetPosition(ctx.GameState.CurrentPlayer), ctx.GameState.CurrentPlayer);
+                    ctx.Game.board.TryRemove(ctx.GameState, p.GetPosition(ctx.GameState.CurrentPlayer), ctx.GameState.CurrentPlayer);
                 }
             }
 
@@ -129,12 +129,12 @@ namespace Level14.BoardGameRules
         {
             internal GlobalContext(GameState g) : base(g) { }
 
-            internal override object GetVariable(string name)
+            public override object GetVariable(string name)
             {
                 switch (name)
                 {
                     case "AllowedMoves":
-                        return Game.allowedMoves;
+                        return GameState.AllowedMoves;
                     case "CurrentPlayer":
                         return GameState.CurrentPlayer;
                     case "False":
@@ -145,7 +145,7 @@ namespace Level14.BoardGameRules
                         if (Game.PlayerCount != 2) return null;
                         return Game.GetPlayer(3 - GameState.CurrentPlayer.ID);
                     case "Pieces":
-                        var pieces = Game.board.GetPiecesWithoutCoords();
+                        var pieces = Game.board.GetPiecesWithoutCoords(GameState);
                         foreach (var p in Game.players)
                         {
                             pieces = pieces.Union(p.GetOffboard());
@@ -158,7 +158,7 @@ namespace Level14.BoardGameRules
                 }
             }
 
-            internal override void SetVariable(string name, object value)
+            public override void SetVariable(string name, object value)
             {
                 if (name == "AllowedMoves")
                 {
@@ -167,7 +167,7 @@ namespace Level14.BoardGameRules
                         throw new InvalidGameException("AllowedMoves must be a set of move rules!");
                     }
                     var newVal = newValObj.OfType<MoveDefinition>();
-                    Game.allowedMoves = newVal;
+                    GameState.AllowedMoves = newVal;
                 }
                 else
                 {

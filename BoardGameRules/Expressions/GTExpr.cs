@@ -14,7 +14,7 @@ namespace Level14.BoardGameRules.Expressions
             this.rhs = rhs;
         }
 
-        public override object Eval(Context c)
+        public override object Eval(IReadContext c)
         {
             int l = (int)lhs.Eval(c);
             int r = (int)rhs.Eval(c);

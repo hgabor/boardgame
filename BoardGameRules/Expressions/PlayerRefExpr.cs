@@ -14,9 +14,9 @@ namespace Level14.BoardGameRules.Expressions
             this.playerID = playerID;
         }
 
-        public override object Eval(Context c)
+        public override object Eval(IReadContext c)
         {
-            return c.GetPlayer((int)playerID.Eval(c));
+            return c.Game.GetPlayer((int)playerID.Eval(c));
         }
 
         static PlayerRefExpr()

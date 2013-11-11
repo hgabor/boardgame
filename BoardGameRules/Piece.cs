@@ -5,19 +5,20 @@ using System.Text;
 
 namespace Level14.BoardGameRules
 {
-    public class Piece: Context
+    public class Piece: IReadContext
     {
         public string Type { get; private set; }
         public Player Owner { get; private set; }
 
         internal Piece(string type, Player owner, GameState g)
-            : base(g)
         {
             this.Type = type;
             this.Owner = owner;
+            this.GameState = g;
+            this.Game = g.game;
         }
 
-        internal override object GetVariable(string name)
+        public object GetVariable(string name)
         {
             if (name == "x" || name == "y" || name == "z")
             {
@@ -42,7 +43,7 @@ namespace Level14.BoardGameRules
             }
             else
             {
-                return base.GetVariable(name);
+                return null;
             }
         }
 
@@ -53,7 +54,7 @@ namespace Level14.BoardGameRules
 
         internal Coords GetPosition(Player asker)
         {
-            foreach (var kvp in Game.GetPieces(asker))
+            foreach (var kvp in Game.GetPieces(GameState, asker))
             {
                 if (this == kvp.Value)
                 {
@@ -67,5 +68,9 @@ namespace Level14.BoardGameRules
         {
             return Owner.ToString() + ":" + Type;
         }
+
+
+        public Game Game { get; private set; }
+        public GameState GameState { get; private set; }
     }
 }

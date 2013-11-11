@@ -16,7 +16,7 @@ namespace Level14.BoardGameRules.Expressions
             this.rhs = rhs;
         }
 
-        public override object Eval(Context c)
+        public override object Eval(IReadContext c)
         {
             bool l = (bool)lhs.Eval(c);
             // Lazy evaluation

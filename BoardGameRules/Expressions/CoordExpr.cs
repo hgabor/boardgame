@@ -14,7 +14,7 @@ namespace Level14.BoardGameRules.Expressions
             coords = (Expression[])expr.Clone();
         }
 
-        public override object Eval(Context c)
+        public override object Eval(IReadContext c)
         {
             int[] newCoords = new int[coords.Length];
             bool[] placeholder = new bool[coords.Length];

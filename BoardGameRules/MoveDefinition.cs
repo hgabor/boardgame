@@ -5,20 +5,21 @@ using System.Text;
 
 namespace Level14.BoardGameRules
 {
-    public class MoveDefinition: Context
+    public class MoveDefinition: IReadContext
     {
         public readonly string PieceType;
         public readonly string Label;
         public readonly Coords From;
         public readonly Coords To;
 
-        internal MoveDefinition(string pieceType, string label, Coords from, Coords to, GameState game)
-            : base(game)
+        internal MoveDefinition(string pieceType, string label, Coords from, Coords to, GameState state)
         {
             this.PieceType = pieceType;
             this.Label = label;
             this.From = from;
             this.To = to;
+            this.GameState = state;
+            this.Game = state.game;
         }
 
         public override string ToString()
@@ -28,7 +29,7 @@ namespace Level14.BoardGameRules
             return string.Format("{0}: {1} -> {2}", PieceType, from, to);
         }
 
-        internal override object GetVariable(string name)
+        public object GetVariable(string name)
         {
             switch (name)
             {
@@ -39,7 +40,7 @@ namespace Level14.BoardGameRules
                 case "to":
                     return Game.Transform(To, GameState.CurrentPlayer);
                 default:
-                    return base.GetVariable(name);
+                    return null;
             }
         }
 
@@ -67,5 +68,9 @@ namespace Level14.BoardGameRules
             hash = hash * 37 + To.GetHashCode();
             return hash;
         }
+
+
+        public Game Game { get; private set; }
+        public GameState GameState { get; private set; }
     }
 }

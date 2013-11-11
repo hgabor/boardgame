@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Level14.BoardGameRules.Expressions
 {
-    class EqExpr:Expression
+    class EqExpr: Expression
     {
         Expression lhs, rhs;
         public EqExpr(Expression lhs, Expression rhs)
@@ -14,7 +14,7 @@ namespace Level14.BoardGameRules.Expressions
             this.rhs = rhs;
         }
 
-        public override object Eval(Context c)
+        public override object Eval(IReadContext c)
         {
             // Handle null values
             return object.Equals(lhs.Eval(c), rhs.Eval(c));

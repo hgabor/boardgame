@@ -7,19 +7,25 @@ namespace Level14.BoardGameRules
 {
     class MultiParentContext: Context
     {
-        Context[] parents;
+        IWriteContext[] parents;
 
-        public MultiParentContext(GameState g, params Context[] parents)
+        public MultiParentContext(GameState g, params IReadContext[] parents)
             : base(g)
         {
-            this.parents = (Context[])parents.Clone();
+            this.parents = new IWriteContext[parents.Length];
+            for (int i = 0; i < parents.Length; i++)
+            {
+                var p = parents[i];
+                if (p is IWriteContext) this.parents[i] = (IWriteContext)p;
+                else { this.parents[i] = new ReadonlyContextWrapper(p); }
+            }
         }
 
-        internal override object GetVariable(string name)
+        public override object GetVariable(string name)
         {
             object ret = base.GetVariable(name);
             if (ret != null) return ret;
-            foreach (Context c in parents)
+            foreach (var c in parents)
             {
                 ret = c.GetVariable(name);
                 if (ret != null) return ret;

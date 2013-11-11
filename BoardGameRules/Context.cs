@@ -5,11 +5,11 @@ using System.Text;
 
 namespace Level14.BoardGameRules
 {
-    public class Context
+    public class Context: IWriteContext
     {
         Context parent;
-        internal Game Game { get; private set; }
-        internal GameState GameState { get; private set; }
+        public Game Game { get; private set; }
+        public GameState GameState { get; private set; }
         Dictionary<string, object> vars = new Dictionary<string, object>();
 
         internal Context(GameState gs) {
@@ -24,7 +24,7 @@ namespace Level14.BoardGameRules
             this.GameState = parent.GameState;
         }
 
-        internal virtual object GetVariable(string name) {
+        public virtual object GetVariable(string name) {
             object ret;
             if (!vars.TryGetValue(name, out ret))
             {
@@ -34,7 +34,7 @@ namespace Level14.BoardGameRules
             return ret;
         }
 
-        internal virtual void SetVariable(string name, object value)
+        public virtual void SetVariable(string name, object value)
         {
             if (parent != null && parent.HasVariable(name))
             {

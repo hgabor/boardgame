@@ -13,7 +13,7 @@ namespace Level14.BoardGameRules.Expressions
             this.name = name;
         }
 
-        public override object Eval(Context c)
+        public override object Eval(IReadContext c)
         {
             return new Closure(c, name);
         }

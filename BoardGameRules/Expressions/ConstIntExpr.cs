@@ -14,7 +14,7 @@ namespace Level14.BoardGameRules.Expressions
             this.i = i;
         }
 
-        public override object Eval(Context c)
+        public override object Eval(IReadContext c)
         {
             return i;
         }

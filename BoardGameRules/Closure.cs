@@ -7,12 +7,13 @@ namespace Level14.BoardGameRules
 {
     class Closure
     {
-        private Context ctx;
+        private IWriteContext ctx;
         private string name;
 
-        public Closure(Context ctx, string name)
+        public Closure(IReadContext ctx, string name)
         {
-            this.ctx = ctx;
+            this.ctx = ctx as IWriteContext;
+            if (this.ctx == null) ctx = new ReadonlyContextWrapper(ctx);
             this.name = name;
         }
 

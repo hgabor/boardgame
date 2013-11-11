@@ -13,7 +13,7 @@ namespace Level14.BoardGameRules.Expressions
             this.expr = expr;
         }
 
-        public override object Eval(Context c)
+        public override object Eval(IReadContext c)
         {
             bool result = (bool)expr.Eval(c);
             return !result;

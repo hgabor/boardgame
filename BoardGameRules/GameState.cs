@@ -18,15 +18,21 @@ namespace Level14.BoardGameRules
             }
         }
 
+        public IEnumerable<MoveDefinition> AllowedMoves { get; set; }
+
+        public Dictionary<Coords, Piece> Board { get; set; }
+
         internal GameState(Game game)
         {
             this.game = game;
+            this.Board = new Dictionary<Coords, Piece>();
         }
 
         private GameState(GameState gs)
         {
             this.game = gs.game;
             this.CurrentPlayerID = gs.CurrentPlayerID;
+            this.Board = new Dictionary<Coords, Piece>(gs.Board);
         }
 
         public GameState Clone()

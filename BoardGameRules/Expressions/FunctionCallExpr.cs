@@ -16,7 +16,7 @@ namespace Level14.BoardGameRules.Expressions
             this.p = (Expression[])p.Clone();
         }
 
-        public override object Eval(Context c)
+        public override object Eval(IReadContext c)
         {
             var f = (ICallable)name.Eval(c);
             if (f == null) throw new InvalidGameException("Invalid function: " + name);

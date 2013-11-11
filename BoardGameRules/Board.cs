@@ -15,45 +15,42 @@ namespace Level14.BoardGameRules
             return c;
         }
 
-        Dictionary<Coords, Piece> board = new Dictionary<Coords, Piece>();
         public Coords Size { get; private set; }
         private Coords lowerLeft;
-        private GameState gameState;
         public CoordTransformation Transformation { get; set; }
 
-        public Board(Coords size, GameState game)
+        public Board(Coords size)
         {
             this.Size = size;
             lowerLeft = new Coords(Array.ConvertAll(size.ToInt32Array(), i => 1));
-            this.gameState = game;
             this.Valid = RuleType.Invalid;
             Transformation = IdentityTransformation;
         }
 
-        public bool TryPut(Coords cIn, Piece p, Player asker)
+        public bool TryPut(GameState state, Coords cIn, Piece p, Player asker)
         {
             Coords c = Transformation(asker, cIn);
 
             if (c.IsPlaceHolder) throw new ArgumentOutOfRangeException("Non-placeholder coords needed.");
-            if (!IsValidPlace(c))
+            if (!IsValidPlace(state, c))
             {
                 throw new ArgumentOutOfRangeException("Coords must be inside the board.");
             }
-            if (board.ContainsKey(c)) return false;
-            board.Add(c, p);
+            if (state.Board.ContainsKey(c)) return false;
+            state.Board.Add(c, p);
             return true;
         }
-        public bool TryRemove(Coords cIn, Player asker)
+        public bool TryRemove(GameState state, Coords cIn, Player asker)
         {
             Coords c = Transformation(asker, cIn);
 
             if (c.IsPlaceHolder) throw new ArgumentOutOfRangeException("Non-placeholder coords needed.");
-            if (!IsValidPlace(c))
+            if (!IsValidPlace(state, c))
             {
                 throw new ArgumentOutOfRangeException("Coords must be inside the board.");
             }
-            if (!board.ContainsKey(c)) return false;
-            board.Remove(c);
+            if (!state.Board.ContainsKey(c)) return false;
+            state.Board.Remove(c);
             return true;
         }
 
@@ -67,9 +64,9 @@ namespace Level14.BoardGameRules
             ruleList.Add(exp);
         }
 
-        private bool IsValidByRules(Coords c)
+        private bool IsValidByRules(GameState state, Coords c)
         {
-            Context ctx = new Context(gameState);
+            Context ctx = new Context(state);
             ctx.SetXYZ(c, null);
             if (Valid == RuleType.Valid)
             {
@@ -93,7 +90,7 @@ namespace Level14.BoardGameRules
             }
         }
 
-        public bool IsValidPlace(Coords c)
+        public bool IsValidPlace(GameState state, Coords c)
         {
             if (c.IsPlaceHolder) throw new ArgumentOutOfRangeException("Non-placeholder coords needed.");
 
@@ -101,33 +98,33 @@ namespace Level14.BoardGameRules
             {
                 if (c[i] < 1 || c[i] > Size[i]) return false;
             }
-            return IsValidByRules(c);
+            return IsValidByRules(state, c);
         }
 
-        public Piece PieceAt(Coords c, Player asker)
+        public Piece PieceAt(GameState state, Coords c, Player asker)
         {
             Piece p;
-            if (board.TryGetValue(Transformation(asker, c), out p)) return p;
+            if (state.Board.TryGetValue(Transformation(asker, c), out p)) return p;
             return null;
         }
 
-        public IEnumerable<KeyValuePair<Coords, Piece>> GetPieces(Player asker)
+        public IEnumerable<KeyValuePair<Coords, Piece>> GetPieces(GameState state, Player asker)
         {
-            var newDict = board.Select(kvp => new KeyValuePair<Coords, Piece>(Transformation(asker, kvp.Key), kvp.Value));
+            var newDict = state.Board.Select(kvp => new KeyValuePair<Coords, Piece>(Transformation(asker, kvp.Key), kvp.Value));
             return newDict;
         }
 
-        public IEnumerable<Piece> GetPiecesWithoutCoords()
+        public IEnumerable<Piece> GetPiecesWithoutCoords(GameState state)
         {
-            return board.Values.AsEnumerable();
+            return state.Board.Values.AsEnumerable();
         }
 
-        private void PossibleCoordsToArray(int[] coords, int dimension, Player asker, List<Coords> outList)
+        private void PossibleCoordsToArray(GameState state, int[] coords, int dimension, Player asker, List<Coords> outList)
         {
             if (dimension == Size.Dimension)
             {
                 Coords c = new Coords(coords);
-                if (IsValidByRules(c))
+                if (IsValidByRules(state, c))
                 {
                     outList.Add(Transformation(asker, c));
                 }
@@ -137,14 +134,14 @@ namespace Level14.BoardGameRules
             {
                 var newCoords = new List<int>(coords);
                 newCoords.Add(i);
-                PossibleCoordsToArray(newCoords.ToArray(), dimension + 1, asker, outList);
+                PossibleCoordsToArray(state, newCoords.ToArray(), dimension + 1, asker, outList);
             }
         }
 
-        public IEnumerable<Coords> EnumerateCoords(Player asker)
+        public IEnumerable<Coords> EnumerateCoords(GameState state, Player asker)
         {
             var coords = new List<Coords>();
-            PossibleCoordsToArray(new int[0], 0, asker, coords);
+            PossibleCoordsToArray(state, new int[0], 0, asker, coords);
             return coords;
         }
     }

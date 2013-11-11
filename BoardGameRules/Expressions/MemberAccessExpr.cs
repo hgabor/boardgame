@@ -16,9 +16,9 @@ namespace Level14.BoardGameRules.Expressions
             this.member = member;
         }
 
-        public override object Eval(Context c)
+        public override object Eval(IReadContext c)
         {
-            Context parentObj = (Context)parent.Eval(c);
+            var parentObj = (IReadContext)parent.Eval(c);
             return member.Eval(parentObj);
         }
 

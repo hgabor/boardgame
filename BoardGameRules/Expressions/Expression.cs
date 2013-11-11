@@ -8,7 +8,7 @@ namespace Level14.BoardGameRules.Expressions
 {
     abstract class Expression
     {
-        public abstract object Eval(Context c);
+        public abstract object Eval(IReadContext c);
 
         private static Dictionary<string, ParserFunction> parsers = new Dictionary<string, ParserFunction>();
 
