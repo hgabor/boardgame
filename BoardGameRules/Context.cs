@@ -12,16 +12,37 @@ namespace Level14.BoardGameRules
         public GameState GameState { get; private set; }
         Dictionary<string, object> vars = new Dictionary<string, object>();
 
+        /// <summary>
+        /// Creates an empty context with no parent.
+        /// </summary>
+        /// <param name="gs"></param>
         internal Context(GameState gs) {
             this.GameState = gs;
             this.Game = gs.game;
         }
 
+        /// <summary>
+        /// Creates am empty context with the specified parent
+        /// </summary>
+        /// <param name="parent"></param>
         internal Context(Context parent)
         {
             this.parent = parent;
             this.Game = parent.Game;
             this.GameState = parent.GameState;
+        }
+
+        /// <summary>
+        /// Clones an existing context, except for the associated game state
+        /// </summary>
+        /// <param name="oldContext"></param>
+        /// <param name="newState"></param>
+        protected Context(Context oldContext, GameState newState)
+        {
+            this.parent = oldContext.parent; // FIXME: only works if we don't save any contexts into state
+            this.Game = oldContext.Game;
+            this.GameState = newState;
+            this.vars = new Dictionary<string, object>(oldContext.vars); // TODO: make sure there are only value types
         }
 
         public virtual object GetVariable(string name) {
@@ -73,10 +94,14 @@ namespace Level14.BoardGameRules
             }
         }
 
-        internal static Context NewLocal(BoardGameRules.Game game)
+        internal static Context NewLocal(GameState state)
         {
-            return new Context(game.GetGlobalContext());
+            return new Context(state.GlobalContext);
         }
 
+        internal virtual Context Clone(BoardGameRules.GameState newState)
+        {
+            return new Context(this, newState);
+        }
     }
 }

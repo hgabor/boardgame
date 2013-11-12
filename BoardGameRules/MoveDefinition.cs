@@ -12,14 +12,13 @@ namespace Level14.BoardGameRules
         public readonly Coords From;
         public readonly Coords To;
 
-        internal MoveDefinition(string pieceType, string label, Coords from, Coords to, GameState state)
+        internal MoveDefinition(string pieceType, string label, Coords from, Coords to, Game game)
         {
             this.PieceType = pieceType;
             this.Label = label;
             this.From = from;
             this.To = to;
-            this.GameState = state;
-            this.Game = state.game;
+            this.Game = game;
         }
 
         public override string ToString()
@@ -71,6 +70,6 @@ namespace Level14.BoardGameRules
 
 
         public Game Game { get; private set; }
-        public GameState GameState { get; private set; }
+        public GameState GameState { get { return Game.LastSuppliedState; } }
     }
 }

@@ -10,12 +10,11 @@ namespace Level14.BoardGameRules
         public string Type { get; private set; }
         public Player Owner { get; private set; }
 
-        internal Piece(string type, Player owner, GameState g)
+        internal Piece(string type, Player owner, Game game)
         {
             this.Type = type;
             this.Owner = owner;
-            this.GameState = g;
-            this.Game = g.game;
+            this.Game = game;
         }
 
         public object GetVariable(string name)
@@ -71,6 +70,12 @@ namespace Level14.BoardGameRules
 
 
         public Game Game { get; private set; }
-        public GameState GameState { get; private set; }
+        public GameState GameState
+        {
+            get
+            {
+                return Game.LastSuppliedState;
+            }
+        }
     }
 }

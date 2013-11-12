@@ -26,7 +26,7 @@ namespace Level14.BoardGameRules.Expressions
             {
                 args[i] = p[i].Eval(c);
             }
-            return f.Call(Context.NewLocal(c.Game), args);
+            return f.Call(Context.NewLocal(c.GameState), args);
         }
 
         static FunctionCallExpr()

@@ -21,6 +21,11 @@ namespace Level14.BoardGameRules
             }
         }
 
+        protected MultiParentContext(MultiParentContext ctx, GameState newState) : base(ctx, newState)
+        {
+            this.parents = (IWriteContext[])ctx.parents.Clone();
+        }
+
         public override object GetVariable(string name)
         {
             object ret = base.GetVariable(name);
@@ -31,6 +36,11 @@ namespace Level14.BoardGameRules
                 if (ret != null) return ret;
             }
             return null;
+        }
+
+        internal override Context Clone(GameState newState)
+        {
+            return new MultiParentContext(this, newState);
         }
     }
 }

@@ -73,7 +73,7 @@ namespace Level14.BoardGameRules
 
             public static void Place(Context ctx, string piecetype, Coords c)
             {
-                Piece p = new Piece(piecetype, ctx.GameState.CurrentPlayer, ctx.GameState);
+                Piece p = new Piece(piecetype, ctx.GameState.CurrentPlayer, ctx.Game);
                 ctx.Game.board.TryPut(ctx.GameState, c, p, ctx.GameState.CurrentPlayer);
             }
 
@@ -98,17 +98,18 @@ namespace Level14.BoardGameRules
             }
         }
 
-        private void RegisterMethod(params string[] names)
+        private void RegisterMethod(GameState state, params string[] names)
         {
             foreach (var name in names)
             {
-                this.globalContext.SetVariable(name, new PredefinedFunction(typeof(M).GetMethod(name)));
+                state.GlobalContext.SetVariable(name, new PredefinedFunction(typeof(M).GetMethod(name)));
             }
         }
 
-        partial void InitGlobals()
+        partial void InitGlobals(GameState state)
         {
             RegisterMethod(
+                state,
                 "ChoosePiece",
                 "Count",
                 "DebugBreak",
@@ -129,6 +130,8 @@ namespace Level14.BoardGameRules
         {
             internal GlobalContext(GameState g) : base(g) { }
 
+            protected GlobalContext(GlobalContext ctx, GameState g) : base(ctx, g) { }
+
             public override object GetVariable(string name)
             {
                 switch (name)
@@ -148,7 +151,7 @@ namespace Level14.BoardGameRules
                         var pieces = Game.board.GetPiecesWithoutCoords(GameState);
                         foreach (var p in Game.players)
                         {
-                            pieces = pieces.Union(p.GetOffboard());
+                            pieces = pieces.Union(p.GetOffboard(GameState));
                         }
                         return pieces;
                     case "True":
@@ -178,6 +181,11 @@ namespace Level14.BoardGameRules
             protected override bool HasVariable(string name)
             {
                 return name == "AllowedMoves" || base.HasVariable(name);
+            }
+
+            internal override Context Clone(GameState newState)
+            {
+                return new GlobalContext(this, newState);
             }
         }
 

@@ -26,7 +26,7 @@ namespace Level14.BoardGameConsole
 
         public static Piece FindOffboardPiece(GameState state, string type)
         {
-            foreach (Piece p in state.CurrentPlayer.GetOffboard())
+            foreach (Piece p in state.CurrentPlayer.GetOffboard(state))
             {
                 if (p.Type == type) return p;
             }
@@ -80,7 +80,7 @@ namespace Level14.BoardGameConsole
                 Console.WriteLine("  {0} - {1}", kvp.Key, kvp.Value);
             }
             Console.WriteLine("Offboard pieces for current player:");
-            Console.WriteLine("  " + string.Join(", ", state.CurrentPlayer.GetOffboard()));
+            Console.WriteLine("  " + string.Join(", ", state.CurrentPlayer.GetOffboard(state)));
         }
 
         static Piece PieceChooser(IEnumerable<Piece> pAll)
@@ -200,7 +200,7 @@ namespace Level14.BoardGameConsole
                             GameState newState = PerformMove(game, state, command[1], command[2]);
                             if (newState != state)
                             {
-                                //state = newState;
+                                state = newState;
                                 Console.WriteLine("OK! Next player: {0}", state.CurrentPlayer);
                             }
                             break;

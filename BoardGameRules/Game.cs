@@ -30,6 +30,11 @@ namespace Level14.BoardGameRules
 
         private List<GameState> oldStates = new List<GameState>();
 
+        internal IEnumerable<Player> EnumeratePlayers()
+        {
+            return players.AsReadOnly();
+        }
+
         public IEnumerable<string> PieceTypes
         {
             get
@@ -59,8 +64,7 @@ namespace Level14.BoardGameRules
             }
         }
 
-        private Context globalContext;
-        internal Context GetGlobalContext() { return globalContext; }
+        internal Context GetGlobalContext(GameState state) { return state.GlobalContext; }
 
         internal Player GetPlayer(int i)
         {
@@ -84,7 +88,10 @@ namespace Level14.BoardGameRules
             return board.GetPieces(state, null); // FIXME: null should be asker, possible bug?
         }
 
-        partial void InitGlobals();
+        [Obsolete("LastSuppliedState should be removed")]
+        internal GameState LastSuppliedState { get; private set; }
+
+        partial void InitGlobals(GameState state);
 
         public Game(string rules, out GameState firstState)
         {
@@ -106,22 +113,23 @@ namespace Level14.BoardGameRules
                 }
 
                 var currentState = new GameState(this);
-                globalContext = new GlobalContext(currentState);
-                InitGlobals();
+                LastSuppliedState = currentState;
+                currentState.GlobalContext = new GlobalContext(currentState);
+                InitGlobals(currentState);
 
                 CommonTree t = (CommonTree)root.Tree;
 
-                int playerCount = (int)t.GetChild("SETTINGS").GetChild("PlayerCount").GetOnlyChild().ParseExpr().Eval(globalContext);
+                int playerCount = (int)t.GetChild("SETTINGS").GetChild("PlayerCount").GetOnlyChild().ParseExpr().Eval(currentState.GlobalContext);
                 for (int i = 0; i < playerCount; i++) players.Add(new Player(i+1));
 
-                var size = (Coords)t.GetChild("SETTINGS").GetChild("BoardDimensions").GetOnlyChild().ParseExpr().Eval(globalContext);
+                var size = (Coords)t.GetChild("SETTINGS").GetChild("BoardDimensions").GetOnlyChild().ParseExpr().Eval(currentState.GlobalContext);
                 board = new Board(size);
 
                 for (int i = 0; i < t.GetChild("SETTINGS").GetChild("PieceTypes").ChildCount; i++)
                 {
                     string pt = t.GetChild("SETTINGS").GetChild("PieceTypes").GetChild(i).Text;
                     pieceTypes.Add(pt);
-                    globalContext.SetVariable(pt, pt);
+                    currentState.GlobalContext.SetVariable(pt, pt);
                 }
 
                 bool mirrorEvents = false;
@@ -186,14 +194,14 @@ namespace Level14.BoardGameRules
                         }
                         var body = funcNode.GetChild("STATEMENTS").ParseStmtList();
                         var func = new UserFunction(paramList.ToArray(), body);
-                        globalContext.SetVariable(name, func);
+                        currentState.GlobalContext.SetVariable(name, func);
                     }
                 }
 
                 if (t.HasChild("INIT"))
                 {
                     var stmt = t.GetChild("INIT").GetChild("STATEMENTS").ParseStmtList();
-                    stmt.Run(globalContext);
+                    stmt.Run(currentState.GlobalContext);
                 }
 
                 if (t.HasChild("STARTINGBOARD"))
@@ -218,7 +226,7 @@ namespace Level14.BoardGameRules
                                 }
                                 break;
                             case "STARTINGPIECES":
-                                int ownerInt = (int)ch.GetChild("PLAYERREF").GetOnlyChild().ParseExpr().Eval(globalContext);
+                                int ownerInt = (int)ch.GetChild("PLAYERREF").GetOnlyChild().ParseExpr().Eval(currentState.GlobalContext);
                                 Player owner = GetPlayer(ownerInt);
                                 currentState.CurrentPlayerID = ownerInt - 1;
 
@@ -233,7 +241,7 @@ namespace Level14.BoardGameRules
                                     Coords coords = null;
                                     if (pieceNode.HasChild("LIT_COORDS"))
                                     {
-                                        coords = (Coords)pieceNode.GetChild("LIT_COORDS").ParseExpr().Eval(globalContext);
+                                        coords = (Coords)pieceNode.GetChild("LIT_COORDS").ParseExpr().Eval(currentState.GlobalContext);
                                     }
                                     else if (pieceNode.HasChild("Offboard"))
                                     { /* Do nothing */ }
@@ -241,10 +249,10 @@ namespace Level14.BoardGameRules
                                     {
                                         throw new Exception("Cannot happen");
                                     }
-                                    var p = new Piece(type, owner, currentState);
+                                    var p = new Piece(type, owner, this);
                                     if (coords == null)
                                     {
-                                        currentState.CurrentPlayer.AddOffboard(p);
+                                        currentState.CurrentPlayer.AddOffboard(currentState, p);
                                     }
                                     else if (!board.TryPut(currentState, coords, p, null))
                                     {
@@ -253,7 +261,7 @@ namespace Level14.BoardGameRules
                                     if (pieceNode.HasChild("TAG"))
                                     {
                                         string tag = pieceNode.GetChild("TAG").GetOnlyChild().Text;
-                                        globalContext.SetVariable(tag, p);
+                                        currentState.GlobalContext.SetVariable(tag, p);
                                     }
                                 }
 
@@ -294,7 +302,7 @@ namespace Level14.BoardGameRules
                     if (moveOpNode.HasChild("Label"))
                     {
                         label = moveOpNode.GetChild("Label").GetOnlyChild().Text;
-                        globalContext.SetVariable(label, label);
+                        currentState.GlobalContext.SetVariable(label, label);
                     }
 
                     Expression condition = null;
@@ -364,7 +372,8 @@ namespace Level14.BoardGameRules
         public GameState TryMakeMoveFromOffboard(GameState oldState, Piece piece, Coords to)
         {
             GameState newState = oldState.Clone();
-            Context ctx = new Context(this.globalContext);
+            LastSuppliedState = newState;
+            Context ctx = new Context(newState.GlobalContext);
             ctx.SetVariable("to", Transform(to, newState.CurrentPlayer));
 
             // piece cannot be null
@@ -393,7 +402,7 @@ namespace Level14.BoardGameRules
                 rule.RunAction(ctx);
 
                 // Perform the move
-                if (!newState.CurrentPlayer.RemoveOffBoard(piece))
+                if (!newState.CurrentPlayer.RemoveOffBoard(newState, piece))
                 {
                     // Original piece was removed, should not happen!
                     throw new InvalidGameException("Cannot move from offboard, piece " + oppPiece.ToString() + " was removed!");
@@ -458,7 +467,7 @@ namespace Level14.BoardGameRules
 
             if (rule.From == null)
             {
-                if (!currentState.CurrentPlayer.GetOffboard().Contains(piece)) return false;
+                if (!currentState.CurrentPlayer.GetOffboard(currentState).Contains(piece)) return false;
                 //var toT = board.Transformation(CurrentPlayer, to);
                 ///var toTExpr = board.Transformation(CurrentPlayer, (Coords)rule.To.Eval(ctx));
                 if (!Coords.Match(to, (Coords)rule.To.Eval(ctx))) return false;
@@ -483,7 +492,8 @@ namespace Level14.BoardGameRules
 
         public GameState TryMakeMove(GameState oldState, Coords from, Coords to) {
             GameState newState = oldState.Clone();
-            Context ctx = new Context(this.globalContext);
+            LastSuppliedState = newState;
+            Context ctx = new Context(newState.GlobalContext);
             // Special vars x, y are from coordinates
             ctx.SetXYZ(from, newState.CurrentPlayer);
             ctx.SetVariable("from", Transform(from, newState.CurrentPlayer));
@@ -550,10 +560,10 @@ namespace Level14.BoardGameRules
                 }
                 currentState.AllowedMoves = null;
                 currentState.AllowedMoves = EnumeratePossibleMoves(currentState);
-                currentState.CurrentPlayer.PreMove(Context.NewLocal(this));
+                currentState.CurrentPlayer.PreMove(Context.NewLocal(currentState));
                 if (currentState.AllowedMoves.Count() == 0)
                 {
-                    currentState.CurrentPlayer.CannotMove(globalContext);
+                    currentState.CurrentPlayer.CannotMove(currentState.GlobalContext);
                     // In most games if the player cannot move, he loses
                     if (currentState.CurrentPlayer.Lost) return;
                     else
@@ -595,20 +605,20 @@ namespace Level14.BoardGameRules
         {
             HashSet<MoveDefinition> moves = new HashSet<MoveDefinition>();
 
-            foreach (var p in state.CurrentPlayer.GetOffboard())
+            foreach (var p in state.CurrentPlayer.GetOffboard(state))
             {
                 foreach (var c in board.EnumerateCoords(state, null))
                 {
                     foreach (var rule in this.moveRules)
                     {
                         if (rule.From != null) continue;
-                        Context ctx = new Context(globalContext);
+                        Context ctx = new Context(state.GlobalContext);
                         ctx.SetXYZ(c, state.CurrentPlayer);
                         var cT = Transform(c, state.CurrentPlayer);
                         ctx.SetVariable("to", cT);
                         if (MoveIsValidGlobal(state, null, c, ctx) && MoveIsValidForRule(state, rule, p, null, cT, ctx))
                         {
-                            moves.Add(new MoveDefinition(pieceType: p.Type, label: rule.Label, from: null, to: c, state: state));
+                            moves.Add(new MoveDefinition(pieceType: p.Type, label: rule.Label, from: null, to: c, game: this));
                         }
                     }
                 }
@@ -620,7 +630,7 @@ namespace Level14.BoardGameRules
                     foreach (var rule in this.moveRules)
                     {
                         if (rule.OffboardRule) continue;
-                        Context ctx = new Context(globalContext);
+                        Context ctx = new Context(state.GlobalContext);
                         ctx.SetXYZ(from, state.CurrentPlayer);
                         var fromT = Transform(from, state.CurrentPlayer);
                         var toT = Transform(to, state.CurrentPlayer);
@@ -628,7 +638,7 @@ namespace Level14.BoardGameRules
                         ctx.SetVariable("to", toT);
                         if (MoveIsValidGlobal(state, from, to, ctx) && MoveIsValidForRule(state, rule, null, fromT, toT, ctx))
                         {
-                            moves.Add(new MoveDefinition(pieceType: board.PieceAt(state, from, null).Type, label: rule.Label, from: from, to: to, state: state));
+                            moves.Add(new MoveDefinition(pieceType: board.PieceAt(state, from, null).Type, label: rule.Label, from: from, to: to, game: this));
                         }
                     }
                 }

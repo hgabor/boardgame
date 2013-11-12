@@ -63,15 +63,15 @@ namespace Level14.BoardGameRules
         public bool Tied { get; internal set; }
         public bool Lost { get; internal set; }
 
-        HashSet<Piece> pieces = new HashSet<Piece>();
-
-        internal void AddOffboard(Piece p)
+        internal void AddOffboard(GameState state, Piece p)
         {
+            var pieces = state.GetOffboard(this);
             pieces.Add(p);
         }
 
-        internal bool RemoveOffBoard(Piece p)
+        internal bool RemoveOffBoard(GameState state, Piece p)
         {
+            var pieces = state.GetOffboard(this);
             if (pieces.Contains(p))
             {
                 pieces.Remove(p);
@@ -83,8 +83,9 @@ namespace Level14.BoardGameRules
             }
         }
 
-        public IEnumerable<Piece> GetOffboard()
+        public IEnumerable<Piece> GetOffboard(GameState state)
         {
+            var pieces = state.GetOffboard(this);
             return new HashSet<Piece>(pieces);
         }
     }
