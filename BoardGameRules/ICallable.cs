@@ -7,6 +7,6 @@ namespace Level14.BoardGameRules
 {
     interface ICallable
     {
-        object Call(Context ctx, params object[] args);
+        object Call(GameState state, Context ctx, params object[] args);
     }
 }

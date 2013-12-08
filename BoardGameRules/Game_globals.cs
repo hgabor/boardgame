@@ -21,7 +21,7 @@ namespace Level14.BoardGameRules
                 var pieces = set.OfType<Piece>();
                 int currentPlayerID = ctx.GameState.CurrentPlayerID;
                 ctx.GameState.CurrentPlayerID = p.ID - 1;
-                Piece pi = ctx.Game.AskForPiece(pieces);
+                Piece pi = ctx.Game.AskForPiece(ctx.GameState, pieces);
                 ctx.GameState.CurrentPlayerID = currentPlayerID;
                 return pi;
             }
@@ -63,7 +63,7 @@ namespace Level14.BoardGameRules
 
             public static void NextPlayer(Context ctx, Player p)
             {
-                ctx.Game.OverrideNextPlayer = p;
+                ctx.GameState.OverrideNextPlayer = p;
             }
 
             public static Piece PieceAt(Context ctx, Coords c)
@@ -88,7 +88,7 @@ namespace Level14.BoardGameRules
                 Piece p = toRemove as Piece;
                 if (p != null)
                 {
-                    ctx.Game.board.TryRemove(ctx.GameState, p.GetPosition(ctx.GameState.CurrentPlayer), ctx.GameState.CurrentPlayer);
+                    ctx.Game.board.TryRemove(ctx.GameState, p.GetPosition(ctx.GameState, ctx.GameState.CurrentPlayer), ctx.GameState.CurrentPlayer);
                 }
             }
 
@@ -126,13 +126,13 @@ namespace Level14.BoardGameRules
                 );
         }
 
-        class GlobalContext : Context
+        internal class GlobalContext : Context
         {
             internal GlobalContext(GameState g) : base(g) { }
 
             protected GlobalContext(GlobalContext ctx, GameState g) : base(ctx, g) { }
 
-            public override object GetVariable(string name)
+            public override object GetVariable(GameState state, string name)
             {
                 switch (name)
                 {
@@ -157,7 +157,7 @@ namespace Level14.BoardGameRules
                     case "True":
                         return true;
                     default:
-                        return base.GetVariable(name);
+                        return base.GetVariable(state, name);
                 }
             }
 

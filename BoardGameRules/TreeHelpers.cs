@@ -103,8 +103,7 @@ namespace Level14.BoardGameRules
         {
             if (input.Text == "PLAYERREF" && input.GetOnlyChild().Text == "LIT_INT")
             {
-                // TODO: make sure null conext is applicable to LIT_INT
-                int thisPlayer = (int)input.GetOnlyChild().ParseExpr().Eval(null);
+                int thisPlayer = (int)input.GetOnlyChild().ParseExpr().Eval(null, null);
                 int otherPlayer = thisPlayer == 1 ? 2 : 1;
                 output = CreatePlayerNode(otherPlayer);
                 return true;

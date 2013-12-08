@@ -20,11 +20,11 @@ namespace Level14.BoardGameRules
         {
             cannotMoveEvents.Add(stmt);
         }
-        internal void CannotMove(Context c)
+        internal void CannotMove(GameState state, Context c)
         {
             foreach (var e in cannotMoveEvents)
             {
-                e.Run(c);
+                e.Run(state, c);
             }
         }
 
@@ -33,11 +33,11 @@ namespace Level14.BoardGameRules
         {
             postMoveEvents.Add(stmt);
         }
-        internal void PostMove(Context c)
+        internal void PostMove(GameState state, Context c)
         {
             foreach (var e in postMoveEvents)
             {
-                e.Run(c);
+                e.Run(state, c);
             }
         }
 
@@ -46,11 +46,11 @@ namespace Level14.BoardGameRules
         {
             preMoveEvents.Add(stmt);
         }
-        internal void PreMove(Context c)
+        internal void PreMove(GameState state, Context c)
         {
             foreach (var e in preMoveEvents)
             {
-                e.Run(c);
+                e.Run(state, c);
             }
         }
 

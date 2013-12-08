@@ -19,9 +19,9 @@ namespace Level14.BoardGameRules
             throw new InvalidOperationException("Cannot write to a readonly object!");
         }
 
-        public object GetVariable(string name)
+        public object GetVariable(GameState state, string name)
         {
-            return readContext.GetVariable(name);
+            return readContext.GetVariable(state, name);
         }
 
         public Game Game
@@ -29,9 +29,10 @@ namespace Level14.BoardGameRules
             get { return readContext.Game; }
         }
 
+        [Obsolete]
         public GameState GameState
         {
-            get { return readContext.GameState; }
+            get { return null; }
         }
     }
 }

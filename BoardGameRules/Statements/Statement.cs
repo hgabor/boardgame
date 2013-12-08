@@ -16,7 +16,7 @@ namespace Level14.BoardGameRules.Statements
             Return,
         }
 
-        public abstract ControlFlow Run(Context c);
+        public abstract ControlFlow Run(GameState state, Context c);
 
         public static Statement Parse(ITree tree)
         {

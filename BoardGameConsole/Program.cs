@@ -83,7 +83,7 @@ namespace Level14.BoardGameConsole
             Console.WriteLine("  " + string.Join(", ", state.CurrentPlayer.GetOffboard(state)));
         }
 
-        static Piece PieceChooser(IEnumerable<Piece> pAll)
+        static Piece PieceChooser(GameState state, IEnumerable<Piece> pAll)
         {
             List<Piece> pieces = new List<Piece>(pAll);
             Piece chosen = null;
@@ -93,7 +93,7 @@ namespace Level14.BoardGameConsole
                 for (int i = 0; i < pieces.Count; i++)
                 {
                     Piece p = pieces[i];
-                    Console.WriteLine("{0,4}: {1} {2}", i, p.GetPosition(), p);
+                    Console.WriteLine("{0,4}: {1} {2}", i, p.GetPosition(state), p);
                 }
                 Console.Write(">> ");
                 string strId = Console.ReadLine();

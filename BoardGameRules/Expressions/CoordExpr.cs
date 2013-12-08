@@ -14,13 +14,13 @@ namespace Level14.BoardGameRules.Expressions
             coords = (Expression[])expr.Clone();
         }
 
-        public override object Eval(IReadContext c)
+        public override object Eval(GameState state, IReadContext c)
         {
             int[] newCoords = new int[coords.Length];
             bool[] placeholder = new bool[coords.Length];
             for (int i = 0; i < coords.Length; i++)
             {
-                object v = coords[i].Eval(c);
+                object v = coords[i].Eval(state, c);
                 if (v is PlaceHolderValue) {
                     placeholder[i] = true;
                 }

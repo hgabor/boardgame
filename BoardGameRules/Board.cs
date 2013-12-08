@@ -73,7 +73,7 @@ namespace Level14.BoardGameRules
                 // We must match at least one rule
                 foreach (var exp in ruleList)
                 {
-                    bool b = (bool)exp.Eval(ctx);
+                    bool b = (bool)exp.Eval(state, ctx);
                     if (b) return true;
                 }
                 return false;
@@ -83,7 +83,7 @@ namespace Level14.BoardGameRules
                 // We mustn't match any rule
                 foreach (var exp in ruleList)
                 {
-                    bool b = (bool)exp.Eval(ctx);
+                    bool b = (bool)exp.Eval(state, ctx);
                     if (b) return false;
                 }
                 return true;

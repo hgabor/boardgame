@@ -16,10 +16,10 @@ namespace Level14.BoardGameRules.Expressions
             this.member = member;
         }
 
-        public override object Eval(IReadContext c)
+        public override object Eval(GameState state, IReadContext c)
         {
-            var parentObj = (IReadContext)parent.Eval(c);
-            return member.Eval(parentObj);
+            var parentObj = (IReadContext)parent.Eval(state, c);
+            return member.Eval(state, parentObj);
         }
 
         static MemberAccessExpr()

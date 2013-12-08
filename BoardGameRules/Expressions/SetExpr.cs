@@ -14,12 +14,12 @@ namespace Level14.BoardGameRules.Expressions
             this.set = new List<Expression>(set);
         }
 
-        public override object Eval(IReadContext c)
+        public override object Eval(GameState state, IReadContext c)
         {
             var ret = new List<object>();
             foreach (var item in set)
             {
-                ret.Add(item.Eval(c));
+                ret.Add(item.Eval(state, c));
             }
             return ret;
         }

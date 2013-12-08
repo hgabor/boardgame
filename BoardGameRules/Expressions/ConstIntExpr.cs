@@ -14,8 +14,9 @@ namespace Level14.BoardGameRules.Expressions
             this.i = i;
         }
 
-        public override object Eval(IReadContext c)
+        public override object Eval(GameState state, IReadContext c)
         {
+            // LIT_INT must not depend on state and context
             return i;
         }
 

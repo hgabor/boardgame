@@ -14,10 +14,10 @@ namespace Level14.BoardGameRules.Expressions
             this.rhs = rhs;
         }
 
-        public override object Eval(IReadContext c)
+        public override object Eval(GameState state, IReadContext c)
         {
-            int l = (int)lhs.Eval(c);
-            int r = (int)rhs.Eval(c);
+            int l = (int)lhs.Eval(state, c);
+            int r = (int)rhs.Eval(state, c);
             return l <= r;
         }
 

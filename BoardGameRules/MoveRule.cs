@@ -20,11 +20,11 @@ namespace Level14.BoardGameRules
         internal Expression Condition { get; private set; }
 
         private Statement action;
-        internal void RunAction(Context ctx)
+        internal void RunAction(GameState state, Context ctx)
         {
             if (action != null)
             {
-                action.Run(ctx);
+                action.Run(state, ctx);
             }
         }
 

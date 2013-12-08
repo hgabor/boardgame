@@ -17,9 +17,9 @@ namespace Level14.BoardGameRules
             this.name = name;
         }
 
-        public object GetVariable()
+        public object GetVariable(GameState state)
         {
-            return ctx.GetVariable(name);
+            return ctx.GetVariable(state, name);
         }
 
         public void SetVariable(object value)

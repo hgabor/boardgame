@@ -15,9 +15,9 @@ namespace Level14.BoardGameRules.Statements
             this.e = e;
         }
 
-        public override ControlFlow Run(Context c)
+        public override ControlFlow Run(GameState state, Context c)
         {
-            e.Eval(c);
+            e.Eval(state, c);
             return ControlFlow.Next;
         }
 

@@ -7,8 +7,7 @@ namespace Level14.BoardGameRules
 {
     interface IReadContext
     {
-        object GetVariable(string name);
+        object GetVariable(GameState state, string name);
         Game Game { get; }
-        GameState GameState { get; }
     }
 }

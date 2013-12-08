@@ -26,13 +26,13 @@ namespace Level14.BoardGameRules
             this.parents = (IWriteContext[])ctx.parents.Clone();
         }
 
-        public override object GetVariable(string name)
+        public override object GetVariable(GameState state, string name)
         {
-            object ret = base.GetVariable(name);
+            object ret = base.GetVariable(state, name);
             if (ret != null) return ret;
             foreach (var c in parents)
             {
-                ret = c.GetVariable(name);
+                ret = c.GetVariable(state, name);
                 if (ret != null) return ret;
             }
             return null;

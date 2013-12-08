@@ -14,7 +14,7 @@ namespace Level14.BoardGameRules
             this.method = method;
         }
 
-        public object Call(Context ctx, params object[] p)
+        public object Call(GameState state, Context ctx, params object[] p)
         {
             var l = new List<object>();
             l.Add(ctx);

@@ -115,7 +115,7 @@ namespace Level14.BoardGameRules
             return hash;
         }
 
-        object ICallable.Call(Context ctx, params object[] args)
+        object ICallable.Call(GameState state, Context ctx, params object[] args)
         {
             if (args.Length != 1) throw new ArgumentException("Coord needs exactly one param");
             int? i = args[0] as int?;

@@ -15,9 +15,9 @@ namespace Level14.BoardGameRules.Statements
             this.exp = exp;
         }
 
-        public override ControlFlow Run(Context c)
+        public override ControlFlow Run(GameState state, Context c)
         {
-            object retval = exp.Eval(c);
+            object retval = exp.Eval(state, c);
             c.SetVariable("_Return", retval);
             return ControlFlow.Return;
         }

@@ -16,17 +16,17 @@ namespace Level14.BoardGameRules.Expressions
             this.p = (Expression[])p.Clone();
         }
 
-        public override object Eval(IReadContext c)
+        public override object Eval(GameState state, IReadContext c)
         {
-            var f = (ICallable)name.Eval(c);
+            var f = (ICallable)name.Eval(state, c);
             if (f == null) throw new InvalidGameException("Invalid function: " + name);
             object[] args = new object[p.Length];
             //args[0] = c;
             for (int i = 0; i < p.Length; i++)
             {
-                args[i] = p[i].Eval(c);
+                args[i] = p[i].Eval(state, c);
             }
-            return f.Call(Context.NewLocal(c.GameState), args);
+            return f.Call(state, Context.NewLocal(state), args);
         }
 
         static FunctionCallExpr()

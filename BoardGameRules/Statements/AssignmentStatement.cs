@@ -17,10 +17,10 @@ namespace Level14.BoardGameRules.Statements
             this.value = value;
         }
 
-        public override ControlFlow Run(Context c)
+        public override ControlFlow Run(GameState state, Context c)
         {
-            Closure cl = (Closure)variable.Eval(c);
-            object newValue = value.Eval(c);
+            Closure cl = (Closure)variable.Eval(state, c);
+            object newValue = value.Eval(state, c);
             cl.SetVariable(newValue);
             return ControlFlow.Next;
         }

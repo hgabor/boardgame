@@ -16,13 +16,13 @@ namespace Level14.BoardGameRules.Expressions
             this.rhs = rhs;
         }
 
-        public override object Eval(IReadContext c)
+        public override object Eval(GameState state, IReadContext c)
         {
-            bool l = (bool)lhs.Eval(c);
+            bool l = (bool)lhs.Eval(state, c);
             // Lazy evaluation
             if (l == true) return true;
 
-            return rhs.Eval(c);
+            return rhs.Eval(state, c);
         }
 
         static OrExpr()

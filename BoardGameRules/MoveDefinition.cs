@@ -28,16 +28,16 @@ namespace Level14.BoardGameRules
             return string.Format("{0}: {1} -> {2}", PieceType, from, to);
         }
 
-        public object GetVariable(string name)
+        public object GetVariable(GameState state, string name)
         {
             switch (name)
             {
                 case "label":
                     return Label;
                 case "from":
-                    return Game.Transform(From, GameState.CurrentPlayer);
+                    return Game.Transform(From, state.CurrentPlayer);
                 case "to":
-                    return Game.Transform(To, GameState.CurrentPlayer);
+                    return Game.Transform(To, state.CurrentPlayer);
                 default:
                     return null;
             }
@@ -70,6 +70,5 @@ namespace Level14.BoardGameRules
 
 
         public Game Game { get; private set; }
-        public GameState GameState { get { return Game.LastSuppliedState; } }
     }
 }

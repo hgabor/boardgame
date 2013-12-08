@@ -17,7 +17,7 @@ namespace Level14.BoardGameRules
             this.body = body;
         }
 
-        object ICallable.Call(Context ctx, params object[] args)
+        object ICallable.Call(GameState state, Context ctx, params object[] args)
         {
             if (argList.Length != args.Length) throw new InvalidGameException("Invalid parameter count!");
             Context local = new Context(ctx);
@@ -25,8 +25,8 @@ namespace Level14.BoardGameRules
             {
                 local.SetVariable(argList[i], args[i]);
             }
-            body.Run(local);
-            return local.GetVariable("_Return");
+            body.Run(state, local);
+            return local.GetVariable(state, "_Return");
         }
     }
 }

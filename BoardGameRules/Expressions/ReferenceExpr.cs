@@ -15,7 +15,7 @@ namespace Level14.BoardGameRules.Expressions
             this.name = name;
         }
 
-        public override object Eval(IReadContext c)
+        public override object Eval(GameState state, IReadContext c)
         {
             if (c == null)
             {
@@ -23,7 +23,7 @@ namespace Level14.BoardGameRules.Expressions
                 // Return value is null to simplify coding
                 return null;
             }
-            object o = c.GetVariable(name);
+            object o = c.GetVariable(state, name);
             //Allow nulls
             //if (o == null) throw new InvalidGameException(string.Format("Variable {0} does not exist!", name));
             return o;

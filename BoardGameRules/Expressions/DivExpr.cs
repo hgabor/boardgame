@@ -15,9 +15,9 @@ namespace Level14.BoardGameRules.Expressions
             this.rhs = rhs;
         }
 
-        public override object Eval(IReadContext c)
+        public override object Eval(GameState state, IReadContext c)
         {
-            return (int)lhs.Eval(c) / (int)rhs.Eval(c);
+            return (int)lhs.Eval(state, c) / (int)rhs.Eval(state, c);
         }
 
         static DivExpr()

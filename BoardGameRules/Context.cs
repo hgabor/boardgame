@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Level14.BoardGameRules
 {
-    public class Context: IWriteContext
+    internal class Context: IWriteContext
     {
         Context parent;
         public Game Game { get; private set; }
@@ -45,11 +45,12 @@ namespace Level14.BoardGameRules
             this.vars = new Dictionary<string, object>(oldContext.vars); // TODO: make sure there are only value types
         }
 
-        public virtual object GetVariable(string name) {
+        public virtual object GetVariable(GameState state, string name)
+        {
             object ret;
             if (!vars.TryGetValue(name, out ret))
             {
-                if (parent != null) return parent.GetVariable(name);
+                if (parent != null) return parent.GetVariable(state, name);
                 else return null;
             }
             return ret;

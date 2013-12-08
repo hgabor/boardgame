@@ -18,9 +18,9 @@ namespace Level14.BoardGameRules.Expressions
             this.where = where;
         }
 
-        public override object Eval(IReadContext c)
+        public override object Eval(GameState state, IReadContext c)
         {
-            IEnumerable<object> set = (IEnumerable<object>)from.Eval(c);
+            IEnumerable<object> set = (IEnumerable<object>)from.Eval(state, c);
             var newSet = new HashSet<object>();
             foreach (var o in set)
             {
@@ -34,7 +34,7 @@ namespace Level14.BoardGameRules.Expressions
                     else
                     {
                         var oContext = (IReadContext)o;
-                        bool result = (bool)where.Eval(new MultiParentContext(c.GameState, oContext, c));
+                        bool result = (bool)where.Eval(state, new MultiParentContext(state, oContext, c));
                         if (result)
                         {
                             newSet.Add(o);
@@ -46,14 +46,14 @@ namespace Level14.BoardGameRules.Expressions
                     var oContext = (IReadContext)o;
                     if (where == null)
                     {
-                        newSet.Add(varName.Eval(oContext));
+                        newSet.Add(varName.Eval(state, oContext));
                     }
                     else
                     {
-                        bool result = (bool)where.Eval(new MultiParentContext(c.GameState, oContext, c));
+                        bool result = (bool)where.Eval(state, new MultiParentContext(state, oContext, c));
                         if (result)
                         {
-                            newSet.Add(varName.Eval(oContext));
+                            newSet.Add(varName.Eval(state, oContext));
                         }
                     }
                 }

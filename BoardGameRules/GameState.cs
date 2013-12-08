@@ -22,7 +22,9 @@ namespace Level14.BoardGameRules
 
         public Dictionary<Coords, Piece> Board { get; set; }
 
-        public Context GlobalContext;
+        internal Player OverrideNextPlayer { get; set; }
+
+        internal Game.GlobalContext GlobalContext;
 
         private Dictionary<Player, HashSet<Piece>> offboard = new Dictionary<Player, HashSet<Piece>>();
         public HashSet<Piece> GetOffboard(Player player)
@@ -45,7 +47,8 @@ namespace Level14.BoardGameRules
             this.game = gs.game;
             this.CurrentPlayerID = gs.CurrentPlayerID;
             this.Board = new Dictionary<Coords, Piece>(gs.Board);
-            this.GlobalContext = gs.GlobalContext.Clone(this);
+            this.OverrideNextPlayer = gs.OverrideNextPlayer;
+            this.GlobalContext = (Game.GlobalContext)gs.GlobalContext.Clone(this);
             foreach (var player in game.EnumeratePlayers())
             {
                 offboard.Add(player, new HashSet<Piece>(gs.GetOffboard(player)));

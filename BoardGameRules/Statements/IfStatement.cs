@@ -17,13 +17,13 @@ namespace Level14.BoardGameRules.Statements
             this.action = action;
         }
 
-        public override ControlFlow Run(Context c)
+        public override ControlFlow Run(GameState state, Context c)
         {
-            object o = condition.Eval(c);
+            object o = condition.Eval(state, c);
             bool ifResult = (bool)o;
             if (ifResult)
             {
-                return action.Run(c);
+                return action.Run(state, c);
             }
             return ControlFlow.Next;
         }
