@@ -138,10 +138,14 @@ namespace Level14.BoardGameRules
                 {
                     case "AllowedMoves":
                         return GameState.AllowedMoves;
+                    case "CurrentGameState":
+                        return state;
                     case "CurrentPlayer":
                         return GameState.CurrentPlayer;
                     case "False":
                         return false;
+                    case "GameStates":
+                        return Game.oldStates;//.Union(new[] {state});
                     case "None":
                         return null;
                     case "OppositePlayer":

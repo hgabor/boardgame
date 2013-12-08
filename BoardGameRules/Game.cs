@@ -369,6 +369,7 @@ namespace Level14.BoardGameRules
             GameState newState = oldState.Clone();
             Context ctx = new Context(newState.GlobalContext);
             ctx.SetVariable("to", Transform(to, newState.CurrentPlayer));
+            ctx.SetVariable("NewGameState", newState);
 
             // piece cannot be null
             if (piece == null) return null;
@@ -408,11 +409,13 @@ namespace Level14.BoardGameRules
                 }
 
                 ctx.SetXYZ(to, newState.CurrentPlayer);
-                newState.CurrentPlayer.PostMove(newState, ctx);
-                PostMoveActions(newState);
 
                 // Move was performed
                 oldStates.Add(oldState);
+
+                newState.CurrentPlayer.PostMove(newState, ctx);
+                PostMoveActions(newState);
+
                 return newState;
             }
             // No suitable rule found.
@@ -436,7 +439,8 @@ namespace Level14.BoardGameRules
                 if (piece.Owner != currentState.CurrentPlayer) return false;
 
                 // Cannot stay in place
-                if (Coords.Match(from, to)) return false;
+                // Why not? :)
+                //if (Coords.Match(from, to)) return false;
             }
 
             return true;
@@ -491,6 +495,7 @@ namespace Level14.BoardGameRules
             ctx.SetXYZ(from, newState.CurrentPlayer);
             ctx.SetVariable("from", Transform(from, newState.CurrentPlayer));
             ctx.SetVariable("to", Transform(to, newState.CurrentPlayer));
+            ctx.SetVariable("NewGameState", newState);
 
 
             if (!MoveIsValidGlobal(newState, from, to, ctx)) return null;
@@ -529,11 +534,13 @@ namespace Level14.BoardGameRules
                 }
 
                 ctx.SetXYZ(to, newState.CurrentPlayer);
-                newState.CurrentPlayer.PostMove(newState, ctx);
-                PostMoveActions(newState);
 
                 // Move was performed
                 oldStates.Add(oldState);
+
+                newState.CurrentPlayer.PostMove(newState, ctx);
+                PostMoveActions(newState);
+
                 return newState;
             }
             // No suitable rule found.
