@@ -50,6 +50,11 @@ namespace Level14.BoardGameGUI
                 this.Height = size[1] * 30;
             }
         }
+        public MainWindow.GameStateGetter GetGameState
+        {
+            private get;
+            set;
+        }
 
         private HashSet<Coords> highlightCoord = new HashSet<Coords>();
         private HashSet<Piece> highlightPiece = new HashSet<Piece>();
@@ -114,7 +119,7 @@ namespace Level14.BoardGameGUI
             }
 
 
-            foreach (var kvp in game.GetPieces())
+            foreach (var kvp in game.GetPieces(GetGameState()))
             {
                 Coords c = ict.GameToBoard(kvp.Key);
                 Piece p = kvp.Value;

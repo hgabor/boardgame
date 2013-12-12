@@ -45,7 +45,7 @@ namespace Level14.BoardGameGUI
                 if (value != null)
                 {
                     offBoard.AddHighlight(value);
-                    foreach (var md in game.EnumerateMovesFromOffboard(value))
+                    foreach (var md in game.EnumerateMovesFromOffboard(gameState, value))
                     {
                         gamePanel.AddHighlight(md.To);
                     }
@@ -70,7 +70,7 @@ namespace Level14.BoardGameGUI
                 {
                     fromCoord = value;
                     gamePanel.AddHighlight(value);
-                    foreach (var md in game.EnumerateMovesFromCoord(value))
+                    foreach (var md in game.EnumerateMovesFromCoord(gameState, value))
                     {
                         gamePanel.AddHighlight(md.To);
                     }
@@ -144,7 +144,7 @@ namespace Level14.BoardGameGUI
                         }
                         break;
                     case SelectState.Special:
-                        foreach (var kvp in game.GetPieces())
+                        foreach (var kvp in game.GetPieces(gameState))
                         {
                             if (Coords.Match(kvp.Key, args.Coords) && mustSelectFrom.Contains(kvp.Value))
                             {
@@ -172,13 +172,16 @@ namespace Level14.BoardGameGUI
         string gamename;
         string rulebook;
         Game game;
+        private GameState gameState;
+        public delegate GameState GameStateGetter();
 
         private void MakeMove()
         {
             if (fromOffboard != null && toCoord != null)
             {
                 // From offboard to board
-                game.TryMakeMoveFromOffboard(FromOffboard, toCoord);
+                var newGameState = game.TryMakeMoveFromOffboard(gameState, FromOffboard, toCoord);
+                if (newGameState != null) gameState = newGameState;
 
                 offBoard.Refresh();
                 gamePanel.InvalidateVisual();
@@ -186,7 +189,8 @@ namespace Level14.BoardGameGUI
             else if (fromCoord != null && toCoord != null)
             {
                 // From coords to coords
-                game.TryMakeMove(FromCoord, toCoord);
+                var newGameState = game.TryMakeMove(gameState, FromCoord, toCoord);
+                if (newGameState != null) gameState = newGameState;
 
                 offBoard.Refresh();
                 gamePanel.InvalidateVisual();
@@ -226,7 +230,7 @@ namespace Level14.BoardGameGUI
             FromCoord = null;
             FromOffboard = null;
             toCoord = null;
-            currentPlayerLabel.Content = game.CurrentPlayer.ToString();
+            currentPlayerLabel.Content = gameState.CurrentPlayer.ToString();
         }
 
         private void SetCoordTransformation(Game game)
@@ -272,7 +276,7 @@ namespace Level14.BoardGameGUI
             selectedPiece = p;
             selectionFrame.Continue = false;
         }
-        private Piece SelectPiece(IEnumerable<Piece> pieces)
+        private Piece SelectPiece(GameState state, IEnumerable<Piece> pieces)
         {
             selectState = SelectState.Special;
             this.mustSelectFrom = pieces;
@@ -300,23 +304,27 @@ namespace Level14.BoardGameGUI
         private void NewGame()
         {
             if (rulebook == null) return;
-            this.game = new Game(rulebook);
+            GameState state;
+            this.game = new Game(rulebook, out state);
+            gameState = state;
             game.SetSelectPieceFunction(SelectPiece);
 
             var cache = new ImageCache(game, gamename);
             SetCoordTransformation(game);
 
             gamePanel.Game = game;
+            gamePanel.GetGameState = () => gameState;
             gamePanel.ImageCache = cache;
 
             offBoard.Game = game;
+            offBoard.GetGameState = () => gameState;
             offBoard.ImageCache = cache;
 
             gamePanel.InvalidateVisual();
 
             offBoard.Refresh();
 
-            currentPlayerLabel.Content = game.CurrentPlayer.ToString();
+            currentPlayerLabel.Content = gameState.CurrentPlayer.ToString();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

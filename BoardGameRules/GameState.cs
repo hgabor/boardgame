@@ -92,8 +92,7 @@ namespace Level14.BoardGameRules
 
         public bool Equals(GameState other)
         {
-            // States are considered equal, if the same pieces are at the same position, and the current player is the same
-            if (CurrentPlayerID != other.CurrentPlayerID) return false;
+            // States are considered equal, if the same pieces are at the same position
             if (Board.Count != other.Board.Count) return false;
             foreach (var kvp in Board)
             {

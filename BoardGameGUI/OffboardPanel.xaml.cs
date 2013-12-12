@@ -26,6 +26,7 @@ namespace Level14.BoardGameGUI
         }
 
         public Game Game { private get; set; }
+        public MainWindow.GameStateGetter GetGameState { private get; set; }
         public ImageCache ImageCache { private get; set; }
         List<Piece> pieces;
         private HashSet<Piece> highlight = new HashSet<Piece>();
@@ -56,7 +57,7 @@ namespace Level14.BoardGameGUI
         public void Refresh()
         {
             if (Game == null) return;
-            pieces = new List<Piece>(Game.CurrentPlayer.GetOffboard());
+            pieces = new List<Piece>(GetGameState().CurrentPlayer.GetOffboard(GetGameState()));
 
             this.InvalidateVisual();
         }
