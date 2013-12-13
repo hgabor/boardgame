@@ -11,6 +11,8 @@ Settings (
 
 Init (
 	movedPieces := [];
+	enPassant := False;
+	enPassantCoords := {0,0};
 )
 
 StartingBoard (
@@ -62,13 +64,26 @@ Patterns (
 Moves (
 	#Normal movement
 	pawn: {_, _} -> Empty {x, y+1};
-	pawn: {_, 2} -> Empty {x, y+2} If IsEmpty({x, y+1});
+	pawn: {_, 2} -> Empty {x, y+2} If IsEmpty({x, y+1}) Then
+		enPassant := True;
+		# The board is mirrored for the opposite player, little hack...
+		enPassantCoords := {x, 9-(y+1)};
+	End;
 	pawn: {_, _} -> {x+1, y+1} If PieceAt(to).Owner = OppositePlayer Then
 		RemovePiece(to);
 	End;
 	pawn: {_, _} -> {x-1, y+1} If PieceAt(to).Owner = OppositePlayer Then
 		RemovePiece(to);
 	End;
+
+	# En Passant
+	pawn: {_, _} -> Empty {x+1, y+1} If to = enPassantCoords Then
+		RemovePiece({x+1, y});
+	End;
+	pawn: {_, _} -> Empty {x-1, y+1} If to = enPassantCoords Then
+		RemovePiece({x-1, y});
+	End;
+
 
 	king: {_, _} -> {_, _} If Match(from, to, Direction_Any, oneStepEmpty) Or Match(from, to, Direction_Any, oneStepOpponent) Then
 		If (PieceAt(to).Owner = OppositePlayer) Then
@@ -128,5 +143,9 @@ Events (
 		If Count([Select $ From Pieces Where Type = king And Owner = OppositePlayer]) = 0 Then
 			Win(Player(1));
 		End
+		If Not enPassant Then
+			enPassantCoords := {0,0};
+		End
+		enPassant := False;
 	)
 )
