@@ -11,7 +11,8 @@
     <RootNamespace>Level14.BoardGameRules</RootNamespace>
     <AssemblyName>BoardGameRules</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -119,6 +120,7 @@
     <Compile Include="Expressions\NotExpr.cs" />
     <Compile Include="Expressions\OrExpr.cs" />
     <Compile Include="Expressions\ModExpr.cs" />
+    <Compile Include="Expressions\RangeExpr.cs" />
     <Compile Include="Expressions\SetExpr.cs" />
     <Compile Include="Expressions\ConstIntExpr.cs" />
     <Compile Include="Context.cs" />
@@ -133,6 +135,8 @@
     <Compile Include="IWriteContext.cs" />
     <Compile Include="MoveDefinition.cs" />
     <Compile Include="ReadonlyContextWrapper.cs" />
+    <Compile Include="RegExp\Pattern.cs" />
+    <Compile Include="RegExp\PatternElement.cs" />
     <Compile Include="Statements\AssignmentStatement.cs" />
     <Compile Include="Statements\ExprStatement.cs" />
     <Compile Include="TreeHelpers.cs" />
@@ -173,7 +177,9 @@
     <Reference Include="Antlr3.Runtime">
       <HintPath>..\lib\Antlr3.Runtime.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
+    <Reference Include="System.Web" />
   </ItemGroup>
   <Target Name="GenerateAntlrCode" Inputs="@(Antlr3)" Outputs="%(Antlr3.OutputFiles)">
     <Exec Command="java -jar &quot;$(SolutionDir)lib\antlr-3.5-complete.jar&quot; -message-format vs2005 @(Antlr3)" Outputs="%(Antlr3.OutputFiles)" />

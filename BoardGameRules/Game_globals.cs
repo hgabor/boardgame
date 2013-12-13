@@ -41,6 +41,28 @@ namespace Level14.BoardGameRules
                 Console.WriteLine("DEBUG: {0}", o);
             }
 
+            public static IEnumerable<object> GetMatching(Context ctx, Coords target, int direction, RegExp.Pattern pattern)
+            {
+                IEnumerable<Coords> c;
+                if (pattern.CaptureAll(ctx.GameState, target, RegExp.Pattern.Direction.Any, out c))
+                {
+                    return c;
+                }
+                else
+                {
+                    return new List<object>();
+                }
+            }
+
+            public static void ForEach(Context ctx, IEnumerable<object> set, ICallable func)
+            {
+                foreach (var obj in set)
+                {
+                    func.Call(ctx.GameState, ctx, new[] { obj });
+                }
+            }
+
+
             public static bool IsEmpty(Context ctx, Coords c)
             {
                 return ctx.Game.board.PieceAt(ctx.GameState, c, ctx.GameState.CurrentPlayer) == null;
@@ -49,6 +71,11 @@ namespace Level14.BoardGameRules
             public static void Lose(Context ctx, Player p)
             {
                 p.Lost = true;
+            }
+
+            public static bool Match(Context ctx, Coords target, int direction, RegExp.Pattern pattern)
+            {
+                return pattern.Match(ctx.GameState, target, RegExp.Pattern.Direction.Any);
             }
 
             public static object Max(Context ctx, IEnumerable<object> set)
@@ -114,8 +141,11 @@ namespace Level14.BoardGameRules
                 "Count",
                 "DebugBreak",
                 "DebugPrint",
+                "GetMatching",
+                "ForEach",
                 "IsEmpty",
                 "Lose",
+                "Match",
                 "Max",
                 "Min",
                 "NextPlayer",

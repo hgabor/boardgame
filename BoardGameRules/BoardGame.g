@@ -33,6 +33,13 @@ tokens {
     ONLY_MODIFIER;
     OP_MOVE;
     PARAMLIST;
+	PATTERN;
+	PATTERNCOUNT;
+	PATTERNNAME;
+	PATTERNPART;
+	PATTERNPARTS;
+	PATTERNPREDICATE;
+	PATTERNS;
     PLAYERREF;
     REF;
     SELECT;
@@ -67,6 +74,7 @@ OP_MUL: '*';
 OP_NE: '!=';
 OP_NOT: 'Not';
 OP_OR: 'Or';
+OP_RANGE: '..';
 OP_SUB: '-';
 
 // Special name that can appear where variables can too
@@ -128,7 +136,8 @@ andExpr: eqExpr (OP_AND^ eqExpr)*;
 eqExpr: relExpr ((OP_EQ|OP_NE)^ relExpr)*;
 relExpr: addExpr ((OP_GT|OP_LT|OP_GTE|OP_LTE)^ addExpr)*;
 addExpr: mulExpr ((OP_ADD|OP_SUB)^ mulExpr)*;
-mulExpr: unaryExpr ((OP_MUL|OP_DIV|OP_MOD)^ unaryExpr)*;
+mulExpr: rangeExpr ((OP_MUL|OP_DIV|OP_MOD)^ rangeExpr)*;
+rangeExpr: unaryExpr (OP_RANGE^ unaryExpr)*;
 unaryExpr:
     OP_SUB memberExpr -> ^(OP_SUB memberExpr) |
     OP_ADD? memberExpr -> memberExpr |
@@ -218,5 +227,14 @@ events: 'Events' '(' event+ ')' -> ^(EVENTS event+);
 event: 'Only'? eventType ( ',' eventType )* '(' statement+ ')' -> ^(EVENT ^(EVENTTYPES eventType+)  ^(STATEMENTS statement+) 'Only'?);
 eventType: playerRef '.' NAME -> ^(EVENTTYPE playerRef NAME);
 
+// Patterns block
+patterns: 'Patterns' '(' pattern+ ')' -> ^(PATTERNS pattern+);
+pattern: NAME '(' patternPart ( ',' patternPart )* ')' -> ^(PATTERN ^(PATTERNNAME NAME) ^(PATTERNPARTS patternPart+ ) );
+patternPart:
+	'Empty' 'Target' -> ^(PATTERNPART ^(PATTERNPREDICATE 'Empty') ^(PATTERNCOUNT 'Target') ) |
+	'Empty' expr -> ^(PATTERNPART ^(PATTERNPREDICATE 'Empty') ^(PATTERNCOUNT expr) ) |
+	ref 'Target' -> ^(PATTERNPART ^(PATTERNPREDICATE ref) ^(PATTERNCOUNT 'Target') ) |
+	ref expr -> ^(PATTERNPART ^(PATTERNPREDICATE ref) ^(PATTERNCOUNT expr) );
+
 // Root parser rule
-rulebook: settings functionBlock? init? startingBoard? moves events EOF;
+rulebook: settings functionBlock? init? startingBoard? patterns? moves events EOF;
