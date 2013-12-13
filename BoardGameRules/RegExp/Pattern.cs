@@ -42,16 +42,25 @@ namespace Level14.BoardGameRules.RegExp
             return list;
         }
 
-        private bool FindMatch(GameState state, Coords input, Incrementer inc, IEnumerable<PatternElement> restOfPattern, out List<Coords> output)
+        private bool FindMatch(GameState state, Coords input, Coords lastInput, Incrementer inc, IEnumerable<PatternElement> restOfPattern, out List<Coords> output)
         {
             if (restOfPattern.Count() == 0)
             {
-                // Nothing more to match
+                // Nothing more to match, make sure the last matched input
+                // was the actual end of the input:
                 output = new List<Coords>();
-                return true;
+                if (Coords.Match(inc(lastInput), input))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
             var currentPattern = restOfPattern.First();
             var newRestOfPattern = restOfPattern.Skip(1);
+
             foreach (var count in currentPattern.Count)
             {
                 // Try all combinations of the pattern count/range
@@ -71,7 +80,7 @@ namespace Level14.BoardGameRules.RegExp
                 }
                 // Current round matches, try the rest
                 List<Coords> newCapture;
-                if (FindMatch(state, currentInput, inc, newRestOfPattern, out newCapture))
+                if (FindMatch(state, currentInput, lastInput, inc, newRestOfPattern, out newCapture))
                 {
                     currentCapture.AddRange(newCapture);
                     output = currentCapture;
@@ -83,7 +92,7 @@ namespace Level14.BoardGameRules.RegExp
             return false;
         }
 
-        public bool CaptureAll(GameState state, Coords start, Direction dir, out IEnumerable<Coords> capture)
+        public bool CaptureAll(GameState state, Coords start, Coords end, Direction dir, out IEnumerable<Coords> capture)
         {
             if (pattern.Count() == 0)
             {
@@ -100,7 +109,7 @@ namespace Level14.BoardGameRules.RegExp
             {
                 // Try every direction
                 List<Coords> c = new List<Coords>();
-                if (FindMatch(state, start, incrementer, pattern, out c))
+                if (FindMatch(state, start, end, incrementer, pattern, out c))
                 {
                     cAll.AddRange(c);
                     retVal = true;
@@ -110,7 +119,7 @@ namespace Level14.BoardGameRules.RegExp
             return retVal;
         }
 
-        public bool Match(GameState state, Coords start, Direction dir)
+        public bool Match(GameState state, Coords start, Coords end, Direction dir)
         {
             if (pattern.Count() == 0)
             {
@@ -124,7 +133,7 @@ namespace Level14.BoardGameRules.RegExp
             {
                 // Try every direction
                 List<Coords> c;
-                if (FindMatch(state, start, incrementer, pattern, out c))
+                if (FindMatch(state, start, end, incrementer, pattern, out c))
                 {
                     return true;
                 }

@@ -1,0 +1,59 @@
+﻿# http://en.wikipedia.org/wiki/English_draughts
+
+Settings (
+	PlayerCount: 2;
+	PieceTypes: pawn, rook, knight, bishop, king, queen;
+	BoardDimensions: {8, 8};
+	RulesOfPlayer2: MirrorOfPlayer1;
+)
+
+# Functions()
+
+StartingBoard (
+	Player(1) (
+		pawn: {1,2}; pawn: {2,2}; pawn: {3,2}; pawn: {4,2};
+		pawn: {5,2}; pawn: {6,2}; pawn: {7,2}; pawn: {8,2};
+		king: {5,1};
+	)
+	Player(2) (
+		pawn: {1,7}; pawn: {2,7}; pawn: {3,7}; pawn: {4,7};
+		pawn: {5,7}; pawn: {6,7}; pawn: {7,7}; pawn: {8,7};
+		king: {5,8};
+	)
+)
+
+Patterns (
+	oneStepEmpty (
+		Empty Target,
+		CurrentPlayer 1
+	)
+	oneStepOpponent (
+		OppositePlayer Target,
+		CurrentPlayer 1
+	)
+)
+
+Moves (
+	pawn: {_, _} -> Empty {x, y+1};
+	pawn: {_, 2} -> Empty {x, y+2} If IsEmpty({x, y+1});
+	pawn: {_, _} -> {x+1, y+1} If PieceAt(to).Owner = OppositePlayer Then
+		RemovePiece(to);
+	End;
+	pawn: {_, _} -> {x-1, y+1} If PieceAt(to).Owner = OppositePlayer Then
+		RemovePiece(to);
+	End;
+
+	king: {_, _} -> {_, _} If Match(from, to, Direction_Any, oneStepEmpty) Or Match(from, to, Direction_Any, oneStepOpponent) Then
+		If (PieceAt(to).Owner = OppositePlayer) Then
+			RemovePiece(to);
+		End
+	End;
+)
+
+Events (
+	Player(1).CannotMove (
+		# Stalemate
+		Lose(Player(1));
+		Lose(Player(2));
+	)
+)

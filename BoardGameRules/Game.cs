@@ -265,71 +265,74 @@ namespace Level14.BoardGameRules
                     }
                 }
 
-                for (int i = 0; i < t.GetChild("PATTERNS").ChildCount; i++)
+                if (t.HasChild("PATTERNS"))
                 {
-                    var patternNode = t.GetChild("PATTERNS").GetChild(i);
-                    var patternName = patternNode.GetChild("PATTERNNAME").GetOnlyChild().Text;
-                    var elements = new List<RegExp.PatternElement>();
-                    for (int j = 0; j < patternNode.GetChild("PATTERNPARTS").ChildCount; j++)
+                    for (int i = 0; i < t.GetChild("PATTERNS").ChildCount; i++)
                     {
-                        var elementNode = patternNode.GetChild("PATTERNPARTS").GetChild(j);
-                        RegExp.PatternElement element = new RegExp.PatternElement();
-                        var predNode = elementNode.GetChild("PATTERNPREDICATE").GetOnlyChild();
-                        if (predNode.Text == "Empty")
+                        var patternNode = t.GetChild("PATTERNS").GetChild(i);
+                        var patternName = patternNode.GetChild("PATTERNNAME").GetOnlyChild().Text;
+                        var elements = new List<RegExp.PatternElement>();
+                        for (int j = 0; j < patternNode.GetChild("PATTERNPARTS").ChildCount; j++)
                         {
-                            element.Predicate = (state, coords) => !state.Board.ContainsKey(coords);
-                        }
-                        else
-                        {
-                            Expression expr = predNode.ParseExpr();
-                            element.Predicate = (state, coords) =>
+                            var elementNode = patternNode.GetChild("PATTERNPARTS").GetChild(j);
+                            RegExp.PatternElement element = new RegExp.PatternElement();
+                            var predNode = elementNode.GetChild("PATTERNPREDICATE").GetOnlyChild();
+                            if (predNode.Text == "Empty")
                             {
-                                Context ctx = new Context(state.GlobalContext);
-                                ctx.SetXYZ(coords, null);
-                                var retVal = expr.Eval(state, ctx);
-                                Player pl = retVal as Player;
-                                if (pl != null)
-                                {
-                                    Piece piece;
-                                    if (!state.Board.TryGetValue(coords, out piece)) return false;
-                                    return piece.Owner == pl;
-                                }
-                                throw new NotSupportedException(string.Format("Unsupported pattern predicate: {0}", retVal));
-                            };
-                        }
-                        var countNode = elementNode.GetChild("PATTERNCOUNT").GetOnlyChild();
-                        if (countNode.Text == "Target")
-                        {
-                            element.IsTarget = true;
-                            element.Count = new int[] { 1 };
-                        }
-                        else
-                        {
-                            Context ctx = new Context(currentState.GlobalContext);
-                            Expression expr = countNode.ParseExpr();
-                            object count = expr.Eval(currentState, ctx);
-                            if (count is int)
-                            {
-                                element.Count = new int[] { (int)count };
-                            }
-                            else if (count is IEnumerable<int>)
-                            {
-                                element.Count = (IEnumerable<int>)count;
-                            }
-                            else if (count is IEnumerable<object>)
-                            {
-                                element.Count = from obj in (IEnumerable<object>)count
-                                                select (int)obj;
+                                element.Predicate = (state, coords) => board.PieceAt(state, coords, state.CurrentPlayer) == null;
                             }
                             else
                             {
-                                throw new InvalidGameException("Invalid value for pattern range.");
+                                Expression expr = predNode.ParseExpr();
+                                element.Predicate = (state, coords) =>
+                                {
+                                    Context ctx = new Context(state.GlobalContext);
+                                    ctx.SetXYZ(coords, state.CurrentPlayer);
+                                    var retVal = expr.Eval(state, ctx);
+                                    Player pl = retVal as Player;
+                                    if (pl != null)
+                                    {
+                                        Piece piece = board.PieceAt(state, coords, state.CurrentPlayer);
+                                        if (piece == null) return false;
+                                        return piece.Owner == pl;
+                                    }
+                                    throw new NotSupportedException(string.Format("Unsupported pattern predicate: {0}", retVal));
+                                };
                             }
+                            var countNode = elementNode.GetChild("PATTERNCOUNT").GetOnlyChild();
+                            if (countNode.Text == "Target")
+                            {
+                                element.IsTarget = true;
+                                element.Count = new int[] { 1 };
+                            }
+                            else
+                            {
+                                Context ctx = new Context(currentState.GlobalContext);
+                                Expression expr = countNode.ParseExpr();
+                                object count = expr.Eval(currentState, ctx);
+                                if (count is int)
+                                {
+                                    element.Count = new int[] { (int)count };
+                                }
+                                else if (count is IEnumerable<int>)
+                                {
+                                    element.Count = (IEnumerable<int>)count;
+                                }
+                                else if (count is IEnumerable<object>)
+                                {
+                                    element.Count = from obj in (IEnumerable<object>)count
+                                                    select (int)obj;
+                                }
+                                else
+                                {
+                                    throw new InvalidGameException("Invalid value for pattern range.");
+                                }
+                            }
+                            elements.Add(element);
                         }
-                        elements.Add(element);
+                        var pattern = new RegExp.Pattern(elements);
+                        currentState.GlobalContext.SetVariable(patternName, pattern);
                     }
-                    var pattern = new RegExp.Pattern(elements);
-                    currentState.GlobalContext.SetVariable(patternName, pattern);
                 }
 
                 ITree moveRoot = t.GetChild("MOVES");

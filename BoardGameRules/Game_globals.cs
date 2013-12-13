@@ -41,10 +41,10 @@ namespace Level14.BoardGameRules
                 Console.WriteLine("DEBUG: {0}", o);
             }
 
-            public static IEnumerable<object> GetMatching(Context ctx, Coords target, int direction, RegExp.Pattern pattern)
+            public static IEnumerable<object> GetMatching(Context ctx, Coords from, Coords target, int direction, RegExp.Pattern pattern)
             {
                 IEnumerable<Coords> c;
-                if (pattern.CaptureAll(ctx.GameState, target, RegExp.Pattern.Direction.Any, out c))
+                if (pattern.CaptureAll(ctx.GameState, target, from, RegExp.Pattern.Direction.Any, out c))
                 {
                     return c;
                 }
@@ -73,9 +73,9 @@ namespace Level14.BoardGameRules
                 p.Lost = true;
             }
 
-            public static bool Match(Context ctx, Coords target, int direction, RegExp.Pattern pattern)
+            public static bool Match(Context ctx, Coords from, Coords target, int direction, RegExp.Pattern pattern)
             {
-                return pattern.Match(ctx.GameState, target, RegExp.Pattern.Direction.Any);
+                return pattern.Match(ctx.GameState, target, from, RegExp.Pattern.Direction.Any);
             }
 
             public static object Max(Context ctx, IEnumerable<object> set)
