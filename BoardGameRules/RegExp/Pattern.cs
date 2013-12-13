@@ -51,7 +51,7 @@ namespace Level14.BoardGameRules.RegExp
                 // Nothing more to match, make sure the last matched input
                 // was the actual end of the input:
                 output = new List<Coords>();
-                if (Coords.Match(lastInput, input))
+                if (lastInput == null || Coords.Match(lastInput, input))
                 {
                     return true;
                 }
@@ -110,7 +110,7 @@ namespace Level14.BoardGameRules.RegExp
                 capture = new List<Coords>();
                 return true;
             }
-            if (!OnSameLine(start, end))
+            if (end != null && !OnSameLine(start, end))
             {
                 capture = new List<Coords>();
                 return false;
@@ -141,7 +141,7 @@ namespace Level14.BoardGameRules.RegExp
             {
                 return true;
             }
-            if (!OnSameLine(start, end))
+            if (end != null && !OnSameLine(start, end))
             {
                 return false;
             }

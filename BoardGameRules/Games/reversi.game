@@ -90,11 +90,11 @@ Patterns (
 
 Moves (
 	piece: Offboard -> Empty {_, _} If Match(
-		to,
+		from, to,
 		Direction_Any,
 		reversiPattern
 	) Then
-		set := GetMatching(to, Direction_Any, reversiPattern);
+		set := GetMatching(from, to, Direction_Any, reversiPattern);
 		ForEach(set, FlipAt);
 	End;
 )
