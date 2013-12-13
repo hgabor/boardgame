@@ -112,7 +112,7 @@ namespace Level14.BoardGameGUI
                     }
                     else if (needsCheckerBoard)
                     {
-                        Brush b = ((i + j) % 2) == 0 ? Brushes.BurlyWood : Brushes.Brown;
+                        Brush b = ((i + j) % 2) == 0 ? Brushes.Brown : Brushes.BurlyWood;
                         dc.DrawRectangle(b, null, new Rect(i * 30, myj * 30, 30, 30));
                     }
                 }
