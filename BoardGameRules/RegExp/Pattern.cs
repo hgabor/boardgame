@@ -19,6 +19,8 @@ namespace Level14.BoardGameRules.RegExp
             UpRight = 32,
             DownLeft = 64,
             DownRight = 128,
+            Straight = Up | Down | Left | Right,
+            Diagonal = UpLeft | UpRight | DownLeft | DownRight,
             Any = Up | Down | Left | Right | UpLeft | UpRight | DownLeft | DownRight,
         }
 
@@ -49,7 +51,7 @@ namespace Level14.BoardGameRules.RegExp
                 // Nothing more to match, make sure the last matched input
                 // was the actual end of the input:
                 output = new List<Coords>();
-                if (Coords.Match(inc(lastInput), input))
+                if (Coords.Match(lastInput, input))
                 {
                     return true;
                 }
@@ -68,7 +70,7 @@ namespace Level14.BoardGameRules.RegExp
                 List<Coords> currentCapture = new List<Coords>();
                 for (int i = 0; i < count; i++) {
                     // All elements must match
-                    if (currentPattern.Predicate(state, input))
+                    if (currentPattern.Predicate(state, currentInput))
                     {
                         currentCapture.Add(currentInput);
                         currentInput = inc(currentInput);

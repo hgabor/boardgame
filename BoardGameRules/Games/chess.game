@@ -13,23 +13,37 @@ StartingBoard (
 	Player(1) (
 		pawn: {1,2}; pawn: {2,2}; pawn: {3,2}; pawn: {4,2};
 		pawn: {5,2}; pawn: {6,2}; pawn: {7,2}; pawn: {8,2};
+		rook: {1,1}; rook: {8,1};
+		knight: {2,1}; knight: {7,1};
+		bishop: {3,1}; bishop: {6,1};
 		king: {5,1};
+		queen: {4,1};
 	)
 	Player(2) (
 		pawn: {1,7}; pawn: {2,7}; pawn: {3,7}; pawn: {4,7};
 		pawn: {5,7}; pawn: {6,7}; pawn: {7,7}; pawn: {8,7};
+		rook: {1,8}; rook: {8,8};
+		knight: {2,8}; knight: {7,8};
+		bishop: {3,8}; bishop: {6,8};
 		king: {5,8};
+		queen: {4,8};
 	)
 )
 
 Patterns (
 	oneStepEmpty (
-		Empty Target,
-		CurrentPlayer 1
+		Empty Target
 	)
 	oneStepOpponent (
+		OppositePlayer Target
+	)
+	anyStepEmpty (
+		Empty Target,
+		Empty 0 .. 8
+	)
+	anyStepOpponent (
 		OppositePlayer Target,
-		CurrentPlayer 1
+		Empty 0 .. 8
 	)
 )
 
@@ -44,6 +58,31 @@ Moves (
 	End;
 
 	king: {_, _} -> {_, _} If Match(from, to, Direction_Any, oneStepEmpty) Or Match(from, to, Direction_Any, oneStepOpponent) Then
+		If (PieceAt(to).Owner = OppositePlayer) Then
+			RemovePiece(to);
+		End
+	End;
+	queen: {_, _} -> {_, _} If Match(from, to, Direction_Any, anyStepEmpty) Or Match(from, to, Direction_Any, anyStepOpponent) Then
+		If (PieceAt(to).Owner = OppositePlayer) Then
+			RemovePiece(to);
+		End
+	End;
+	rook: {_, _} -> {_, _} If Match(from, to, Direction_Straight, anyStepEmpty) Or Match(from, to, Direction_Straight, anyStepOpponent) Then
+		If (PieceAt(to).Owner = OppositePlayer) Then
+			RemovePiece(to);
+		End
+	End;
+	bishop: {_, _} -> {_, _} If Match(from, to, Direction_Diagonal, anyStepEmpty) Or Match(from, to, Direction_Diagonal, anyStepOpponent) Then
+		If (PieceAt(to).Owner = OppositePlayer) Then
+			RemovePiece(to);
+		End
+	End;
+
+	knight: {_,_} -> {_,_}
+		If (((Abs(from.x - to.x) = 2) And (Abs(from.y - to.y) = 1)) Or
+		    ((Abs(from.x - to.x) = 1) And (Abs(from.y - to.y) = 2))) And
+			(PieceAt(to).Owner != CurrentPlayer) Then
+
 		If (PieceAt(to).Owner = OppositePlayer) Then
 			RemovePiece(to);
 		End

@@ -12,6 +12,10 @@ namespace Level14.BoardGameRules
     {
         private static class M
         {
+            public static int Abs(Context ctx, int i)
+            {
+                return Math.Abs(i);
+            }
             public static Piece ChoosePiece(Context ctx, Player p, IEnumerable<object> set)
             {
                 if (set.Count() == 0)
@@ -73,9 +77,9 @@ namespace Level14.BoardGameRules
                 p.Lost = true;
             }
 
-            public static bool Match(Context ctx, Coords from, Coords target, int direction, RegExp.Pattern pattern)
+            public static bool Match(Context ctx, Coords from, Coords target, RegExp.Pattern.Direction direction, RegExp.Pattern pattern)
             {
-                return pattern.Match(ctx.GameState, target, from, RegExp.Pattern.Direction.Any);
+                return pattern.Match(ctx.GameState, target, from, direction);
             }
 
             public static object Max(Context ctx, IEnumerable<object> set)
@@ -137,6 +141,7 @@ namespace Level14.BoardGameRules
         {
             RegisterMethod(
                 state,
+                "Abs",
                 "ChoosePiece",
                 "Count",
                 "DebugBreak",
@@ -172,6 +177,12 @@ namespace Level14.BoardGameRules
                         return state;
                     case "CurrentPlayer":
                         return GameState.CurrentPlayer;
+                    case "Direction_Any":
+                        return RegExp.Pattern.Direction.Any;
+                    case "Direction_Diagonal":
+                        return RegExp.Pattern.Direction.Diagonal;
+                    case "Direction_Straight":
+                        return RegExp.Pattern.Direction.Straight;
                     case "False":
                         return false;
                     case "GameStates":
