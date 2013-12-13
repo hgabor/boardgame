@@ -114,7 +114,7 @@ playerRef: 'Player' '(' expr ')' -> ^(PLAYERREF expr);
 selectExpr:
     '[' 'Select' name 'From' ref ']' -> ^(SELECT name ^(SELECT_FROM ref)) |
     '[' 'Select' name 'From' ref 'Where' expr ']' -> ^(SELECT name ^(SELECT_FROM ref) ^(SELECT_WHERE expr)) ;
-setLiteral: '[' (expr (',' expr)* ','?)? ']' -> ^(LIT_SET expr+);
+setLiteral: '[' (expr (',' expr)* ','?)? ']' -> ^(LIT_SET expr*);
 setExpr: selectExpr | setLiteral;
 
 // Basic variable references

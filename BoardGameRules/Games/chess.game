@@ -9,6 +9,10 @@ Settings (
 
 # Functions()
 
+Init (
+	movedPieces := [];
+)
+
 StartingBoard (
 	Player(1) (
 		pawn: {1,2}; pawn: {2,2}; pawn: {3,2}; pawn: {4,2};
@@ -45,9 +49,18 @@ Patterns (
 		OppositePlayer Target,
 		Empty 0 .. 8
 	)
+	castleLeft (
+		CurrentPlayer Target,
+		Empty 3
+	)
+	castleRight (
+		CurrentPlayer Target,
+		Empty 2
+	)
 )
 
 Moves (
+	#Normal movement
 	pawn: {_, _} -> Empty {x, y+1};
 	pawn: {_, 2} -> Empty {x, y+2} If IsEmpty({x, y+1});
 	pawn: {_, _} -> {x+1, y+1} If PieceAt(to).Owner = OppositePlayer Then
@@ -87,6 +100,20 @@ Moves (
 			RemovePiece(to);
 		End
 	End;
+
+	#Castling
+	#To the left:
+	king: {_, _} -> {x-2, y} If Not Contains(movedPieces, king) And Not Contains(movedPieces, PieceAt({1, y})) And
+		Match(from, {1, y}, Direction_Straight, castleLeft) Then
+		RemovePiece({1, y});
+		Place(rook, {4, y});
+	End;
+	#To the right:
+	king: {_, _} -> {x+2, y} If Not Contains(movedPieces, king) And Not Contains(movedPieces, PieceAt({8, y})) And
+		Match(from, {8, y}, Direction_Straight, castleRight) Then
+		RemovePiece({8, y});
+		Place(rook, {6, y});
+	End;
 )
 
 Events (
@@ -94,5 +121,12 @@ Events (
 		# Stalemate
 		Lose(Player(1));
 		Lose(Player(2));
+	)
+
+	Player(1).FinishedMove (
+		movedPieces := AddToSet(movedPieces, PieceAt(to));
+		If Count([Select $ From Pieces Where Type = king And Owner = OppositePlayer]) = 0 Then
+			Win(Player(1));
+		End
 	)
 )

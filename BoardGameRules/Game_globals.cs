@@ -16,6 +16,12 @@ namespace Level14.BoardGameRules
             {
                 return Math.Abs(i);
             }
+
+            public static IEnumerable<object> AddToSet(Context ctx, IEnumerable<object> set, object obj)
+            {
+                return set.Union(new[] { obj });
+            }
+
             public static Piece ChoosePiece(Context ctx, Player p, IEnumerable<object> set)
             {
                 if (set.Count() == 0)
@@ -28,6 +34,11 @@ namespace Level14.BoardGameRules
                 Piece pi = ctx.Game.AskForPiece(ctx.GameState, pieces);
                 ctx.GameState.CurrentPlayerID = currentPlayerID;
                 return pi;
+            }
+
+            public static bool Contains(Context ctx, IEnumerable<object> set, object obj)
+            {
+                return set.Contains(obj);
             }
 
             public static int Count(Context ctx, IEnumerable<object> set)
@@ -142,7 +153,9 @@ namespace Level14.BoardGameRules
             RegisterMethod(
                 state,
                 "Abs",
+                "AddToSet",
                 "ChoosePiece",
+                "Contains",
                 "Count",
                 "DebugBreak",
                 "DebugPrint",
