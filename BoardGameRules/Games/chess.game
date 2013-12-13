@@ -13,6 +13,7 @@ Init (
 	movedPieces := [];
 	enPassant := False;
 	enPassantCoords := {0,0};
+	moveCount := 0;
 )
 
 StartingBoard (
@@ -63,45 +64,60 @@ Patterns (
 
 Moves (
 	#Normal movement
-	pawn: {_, _} -> Empty {x, y+1};
+	pawn: {_, _} -> Empty {x, y+1} Then
+		moveCount := 0;
+	End;
 	pawn: {_, 2} -> Empty {x, y+2} If IsEmpty({x, y+1}) Then
+		moveCount := 0;
 		enPassant := True;
 		# The board is mirrored for the opposite player, little hack...
 		enPassantCoords := {x, 9-(y+1)};
 	End;
 	pawn: {_, _} -> {x+1, y+1} If PieceAt(to).Owner = OppositePlayer Then
+		moveCount := 0;
 		RemovePiece(to);
 	End;
 	pawn: {_, _} -> {x-1, y+1} If PieceAt(to).Owner = OppositePlayer Then
+		moveCount := 0;
 		RemovePiece(to);
 	End;
 
 	# En Passant
 	pawn: {_, _} -> Empty {x+1, y+1} If to = enPassantCoords Then
+		moveCount := 0;
 		RemovePiece({x+1, y});
 	End;
 	pawn: {_, _} -> Empty {x-1, y+1} If to = enPassantCoords Then
+		moveCount := 0;
 		RemovePiece({x-1, y});
 	End;
 
 
 	king: {_, _} -> {_, _} If Match(from, to, Direction_Any, oneStepEmpty) Or Match(from, to, Direction_Any, oneStepOpponent) Then
+		moveCount := moveCount + 1;
 		If (PieceAt(to).Owner = OppositePlayer) Then
+			moveCount := 0;
 			RemovePiece(to);
 		End
 	End;
 	queen: {_, _} -> {_, _} If Match(from, to, Direction_Any, anyStepEmpty) Or Match(from, to, Direction_Any, anyStepOpponent) Then
+		moveCount := moveCount + 1;
 		If (PieceAt(to).Owner = OppositePlayer) Then
+			moveCount := 0;
 			RemovePiece(to);
 		End
 	End;
 	rook: {_, _} -> {_, _} If Match(from, to, Direction_Straight, anyStepEmpty) Or Match(from, to, Direction_Straight, anyStepOpponent) Then
+		moveCount := moveCount + 1;
 		If (PieceAt(to).Owner = OppositePlayer) Then
+			moveCount := 0;
 			RemovePiece(to);
 		End
 	End;
 	bishop: {_, _} -> {_, _} If Match(from, to, Direction_Diagonal, anyStepEmpty) Or Match(from, to, Direction_Diagonal, anyStepOpponent) Then
+		moveCount := moveCount + 1;
 		If (PieceAt(to).Owner = OppositePlayer) Then
+			moveCount := 0;
 			RemovePiece(to);
 		End
 	End;
@@ -111,7 +127,9 @@ Moves (
 		    ((Abs(from.x - to.x) = 1) And (Abs(from.y - to.y) = 2))) And
 			(PieceAt(to).Owner != CurrentPlayer) Then
 
+		moveCount := moveCount + 1;
 		If (PieceAt(to).Owner = OppositePlayer) Then
+			moveCount := 0;
 			RemovePiece(to);
 		End
 	End;
@@ -122,12 +140,14 @@ Moves (
 		Match(from, {1, y}, Direction_Straight, castleLeft) Then
 		RemovePiece({1, y});
 		Place(rook, {4, y});
+		moveCount := moveCount + 1;
 	End;
 	#To the right:
 	king: {_, _} -> {x+2, y} If Not Contains(movedPieces, king) And Not Contains(movedPieces, PieceAt({8, y})) And
 		Match(from, {8, y}, Direction_Straight, castleRight) Then
 		RemovePiece({8, y});
 		Place(rook, {6, y});
+		moveCount := moveCount + 1;
 	End;
 )
 
@@ -147,5 +167,18 @@ Events (
 			enPassantCoords := {0,0};
 		End
 		enPassant := False;
+		If to.y = 8 And PieceAt(to).Type = pawn Then
+			RemovePiece(to);
+			Place(queen, to);
+		End
+
+		If moveCount >= 50 Then
+			Lose(Player(1));
+			Lose(Player(2));
+		End
+		If Count([Select $ From GameStates Where Self = CurrentGameState]) >= 3 Then
+			Lose(Player(1));
+			Lose(Player(2));
+		End
 	)
 )
