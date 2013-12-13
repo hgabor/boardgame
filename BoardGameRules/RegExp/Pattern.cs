@@ -94,12 +94,26 @@ namespace Level14.BoardGameRules.RegExp
             return false;
         }
 
+        private static bool OnSameLine(Coords c1, Coords c2)
+        {
+            if (c1[0] == c2[0]) return true;
+            if (c1[1] == c2[1]) return true;
+            if (c1[0] + c1[1] == c2[0] + c2[1]) return true;
+            if (c1[0] - c1[1] == c2[0] - c2[1]) return true;
+            return false;
+        }
+
         public bool CaptureAll(GameState state, Coords start, Coords end, Direction dir, out IEnumerable<Coords> capture)
         {
             if (pattern.Count() == 0)
             {
                 capture = new List<Coords>();
                 return true;
+            }
+            if (!OnSameLine(start, end))
+            {
+                capture = new List<Coords>();
+                return false;
             }
             if (!pattern.ElementAt(0).IsTarget)
             {
@@ -126,6 +140,10 @@ namespace Level14.BoardGameRules.RegExp
             if (pattern.Count() == 0)
             {
                 return true;
+            }
+            if (!OnSameLine(start, end))
+            {
+                return false;
             }
             if (!pattern.ElementAt(0).IsTarget)
             {
