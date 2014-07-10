@@ -1,0 +1,83 @@
+Root: /v1/
+
+Providing the key via a custom HTTP header:
+BoardApiKey: 01234567-89ab-cdef-0123-456789abcdef
+
+/session
++POST - start a new session, get a key
+    in: {'nick': 'Hali'}
+    out: {'NickName': ..., 'Key': ..., 'SocketPort': ...}
+    error: nick is taken
++GET - get the data for the current session
+    in: key
+    out: {'NickName': ..., 'Key': ..., 'SocketPort': ...}
+    error: no/invalid key
+
+/gametypes
++GET - list the available game types (chess, reversi etc.)
+    out: ['game1', 'game2']
+
+
+
+/games/{?started=X&type=X}
+GET - list all running or starting games
+    in: key
+        started (optional): true | false
+        type (optional): the game type
+    out: list of game ids w/ basic info
++POST - start a new game
+    in: key
+        {'type': ...}
+    out: {'Id': ..., 'GameType': 'gametype'}
+         Should include: playerCount, playerID
+    error: invalid type
+
+/games/{id}
+GET - get the status of the board (current player, pieces, who won etc.)
+    out: status of the board
+
+/games/{id}/piecemapping
+GET - get the mapping of the used pieces to standard image files
+    out: the mapping
+
+/games/{id}/move
+POST - make a move
+    in: from, to
+    error: move is invalid, not your turn
+
+/games/{id}/choosepiece
+POST - choose a piece as a special move (e.g. in mills)
+    in: coords
+    error: invalid piece, no choose required
+
+/games/{id}/availablemoves
+GET - list the available moves
+    out: the possible moves
+    error: not your turn
+
+/games/{id}/join
+POST - join the game
+    error: the game has already started, you are a spectator
+
+/games/{id}/leave
+POST - leave the game
+    error: you are not in the game
+
+/games/{id}/joinspectators
+POST - join the spectators (receive notification without playing)
+    error: you are a player
+
+/games/{id}/leavespectators
+POST - leave the specators (stop receiving notification about the game)
+    error: you are not a spectator
+    
+
+Socket messages:
+
+Game started
+    Game ID
+Moved
+    Game ID
+Game over
+    Game ID
+

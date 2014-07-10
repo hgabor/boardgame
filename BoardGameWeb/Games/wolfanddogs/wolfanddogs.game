@@ -1,0 +1,48 @@
+
+Settings (
+    PlayerCount: 2;
+    BoardDimensions: {8, 8};
+    PieceTypes: wolf, dog;
+)
+
+StartingBoard (
+    Invalid (
+       (x + y) % 2 = 0;
+    )
+    Player(2) (
+        dog: {2, 1};
+        dog: {4, 1};
+        dog: {6, 1};
+        dog: {8, 1};
+    )
+    Player(1) (
+        wolf $wolf: Offboard;
+    )
+)
+
+Moves (
+    wolf: Offboard -> Empty {_, _} Then
+        NextPlayer(Player(1));
+    End;
+    wolf: {_, _} -> Empty {x+1, y+1};
+    wolf: {_, _} -> Empty {x-1, y+1};
+    wolf: {_, _} -> Empty {x+1, y-1};
+    wolf: {_, _} -> Empty {x-1, y-1};
+    dog: {_, _} -> Empty {x+1, y+1};
+    dog: {_, _} -> Empty {x-1, y+1};
+)
+
+Events (
+    Player(1).CannotMove (
+        Win(Player(2));
+    )
+    Player(2).CannotMove (
+        Win(Player(1));
+    )
+    Player(1).FinishedMove,
+    Player(2).FinishedMove (
+        If Min([Select y From Pieces Where Owner = Player(2)]) >= $wolf.y Then
+              Win(Player(1));
+        End
+    )
+)
