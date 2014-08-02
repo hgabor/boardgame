@@ -51,7 +51,7 @@ namespace Level14.BoardGameWeb.Models
 
         private static object sessionLock = new object();
         private static ConcurrentDictionary<string, Session> sessions = new ConcurrentDictionary<string, Session>();
-        private static ConcurrentDictionary<string, Session> Sessions {
+        internal static ConcurrentDictionary<string, Session> Sessions {
             get
             {
                 return sessions;

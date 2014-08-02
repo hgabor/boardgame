@@ -35,7 +35,29 @@ namespace Level14.BoardGameWeb
                 {
                     server.OpenAsync().Wait();
                     Console.WriteLine("Press any key to stop the server");
-                    Console.ReadKey();
+
+                    char key;
+                    do
+                    {
+                        Console.WriteLine(
+@"Usage:
+    s - list sessions
+    q - quit"
+                            );
+                        key = char.ToLower(Console.ReadKey().KeyChar);
+                        Console.WriteLine();
+
+                        switch (key)
+                        {
+                            case 's':
+                                foreach (var s in Models.Session.Sessions)
+                                {
+                                    Console.WriteLine("{0}: {1}", s.Key, s.Value.NickName);
+                                }
+                                break;
+                        }
+
+                    } while (key != 'q');
                 }
             }
             catch (Exception ex)
