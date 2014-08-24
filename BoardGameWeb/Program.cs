@@ -52,12 +52,13 @@ namespace Level14.BoardGameWeb
                             case 's':
                                 foreach (var s in Models.Session.Sessions)
                                 {
-                                    Console.WriteLine("{0}: {1}", s.Key, s.Value.NickName);
+                                    Console.WriteLine("{0}: {1} (port {2})", s.Key, s.Value.NickName, s.Value.SocketPort);
                                 }
                                 break;
                         }
 
                     } while (key != 'q');
+                    Models.Session.DisposeAll();
                 }
             }
             catch (Exception ex)
